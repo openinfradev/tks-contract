@@ -89,14 +89,14 @@ func TestGetContract(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	req := pb.GetContractRequest{
-		ContractId: "cbp-100001-xdkzkl",
+		ContractId: "cbp-100002-xdkzkl",
 	}
 	res, _ := s.GetContract(ctx, &req)
 
 	expected := &pb.GetContractResponse{
 		Code: pb.Code_NOT_FOUND,
 		Error: &pb.Error{
-			Msg: "Not found contract for cbp-100001-xdkzkl",
+			Msg: "Not found contract for cbp-100002-xdkzkl",
 		},
 	}
 	if !reflect.DeepEqual(expected, res) {

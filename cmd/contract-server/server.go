@@ -39,7 +39,9 @@ func main() {
 		log.Fatal("failed to listen:", err)
 	}
 	if enableMockup {
-		InsertMockupContracts(contractAccessor)
+		if err := InsertMockupContracts(contractAccessor); err != nil {
+			log.Warn("failed to create mockup data:", err)
+		}
 	}
 	s := grpc.NewServer()
 	pb.RegisterContractServiceServer(s, &server{})
