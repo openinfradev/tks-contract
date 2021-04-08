@@ -1,35 +1,54 @@
 package log
 
 import (
-	"log"
 	"os"
+	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	logger *log.Logger
+	logger *logrus.Logger
 )
 
-// Initialize initializes log.Logger with parameters.
-func Initialize(serviceName string) {
-	logger = log.New(os.Stdout, "["+serviceName+"] ", log.Ldate|log.Ltime)
+// Init initializes logrus.logger and set
+func init() {
+	logger = logrus.New()
+	logger.Out = os.Stdout
+
+	logLevel := strings.ToLower(os.Getenv("LOG_LEVEL"))
+	switch logLevel {
+	case "debug":
+		logger.SetLevel(logrus.DebugLevel)
+	case "warning":
+		logger.SetLevel(logrus.WarnLevel)
+	case "info":
+		logger.SetLevel(logrus.InfoLevel)
+	case "error":
+		logger.SetLevel(logrus.ErrorLevel)
+	case "fatal":
+		logger.SetLevel(logrus.FatalLevel)
+	default:
+		logger.SetLevel(logrus.InfoLevel)
+	}
 }
 
-func Logger() *log.Logger {
-	return logger
+func Info(v ...interface{}) {
+	logger.Info(v...)
 }
 
-func Println(v ...interface{}) {
-	logger.Println(v...)
+func Warn(v ...interface{}) {
+	logger.Warn(v...)
 }
 
-func Printf(format string, v ...interface{}) {
-	logger.Printf(format, v...)
+func Debug(v ...interface{}) {
+	logger.Debug(v...)
 }
 
-func Fatalln(v ...interface{}) {
-	logger.Fatalln(v...)
+func Error(v ...interface{}) {
+	logger.Debug(v...)
 }
 
-func Fatalf(format string, v ...interface{}) {
-	logger.Fatalf(format, v...)
+func Fatal(v ...interface{}) {
+	logger.Fatal(v...)
 }

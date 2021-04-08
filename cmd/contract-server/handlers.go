@@ -12,7 +12,7 @@ var contractAccessor *contract.ContractAccessor
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
-	log.Println("Request 'CreateContract' for contractID", in.GetContractId())
+	log.Debug("Request 'CreateContract' for contractID", in.GetContractId())
 	mID, err := contractAccessor.Post(in.GetContractorName(),
 		contract.ContractId(in.GetContractId()),
 		in.GetAvailableServices(),
@@ -36,7 +36,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 // UpdateQuota implements pbgo.ContractService.UpdateQuota gRPC
 func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*pb.UpdateQuotaResponse, error) {
-	log.Println("Not implemented: UpdateQuota")
+	log.Debug("Not implemented: UpdateQuota")
 	res := pb.UpdateQuotaResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,
@@ -46,7 +46,7 @@ func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*p
 
 // UpdateServices implements pbgo.ContractService.UpdateServices gRPC
 func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesRequest) (*pb.UpdateServicesResponse, error) {
-	log.Println("Not implemented: UpdateServices")
+	log.Debug("Not implemented: UpdateServices")
 	res := pb.UpdateServicesResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,
@@ -56,7 +56,7 @@ func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesReques
 
 // GetContract implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*pb.GetContractResponse, error) {
-	log.Println("Request 'GetContract' for contractID", in.GetContractId())
+	log.Debug("Request 'GetContract' for contractID", in.GetContractId())
 	doc, err := contractAccessor.Get(contract.ContractId(in.GetContractId()))
 	if err != nil {
 		res := pb.GetContractResponse{
@@ -82,7 +82,7 @@ func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*p
 
 // GetQuota implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQuotaResponse, error) {
-	log.Println("Not implemented: GetQuota")
+	log.Warn("Not implemented: GetQuota")
 	res := pb.GetQuotaResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,
@@ -92,7 +92,7 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 
 // GetServices implements pbgo.ContractService.GetServices gRPC
 func (s *server) GetServices(ctx context.Context, in *pb.GetServicesRequest) (*pb.GetServicesResponse, error) {
-	log.Println("Not implemented: GetServices")
+	log.Warn("Not implemented: GetServices")
 	res := pb.GetServicesResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,

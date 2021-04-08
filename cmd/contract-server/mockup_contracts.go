@@ -1,9 +1,8 @@
 package main
 
 import (
-	"log"
-
 	"github.com/openinfradev/tks-contract/pkg/contract"
+	"github.com/openinfradev/tks-contract/pkg/log"
 	"github.com/openinfradev/tks-proto/pbgo"
 )
 
@@ -17,6 +16,6 @@ func InsertMockupContracts(contract *contract.ContractAccessor) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Create new contract. mID:", mID)
+	log.Info("Create Mockup data! new contract. mID:", mID)
 	return nil
 }

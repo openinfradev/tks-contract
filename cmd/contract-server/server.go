@@ -18,20 +18,19 @@ type server struct {
 }
 
 func init() {
-	log.Initialize("tks-contract")
 	contractAccessor = contract.NewContractAccessor()
 	InsertMockupContracts(contractAccessor)
 }
 
 func main() {
 	lis, err := net.Listen("tcp", port)
-	log.Println("Starting to listen port ", port)
+	log.Info("Starting to listen port ", port)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterContractServiceServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatal("failed to serve: %v", err)
 	}
 }
