@@ -27,13 +27,11 @@ func TestCreateContract(t *testing.T) {
 		t.Error("error occured " + err.Error())
 	}
 
-	expected := &pb.CreateContractResponse{
-		Code:    pb.Code_UNIMPLEMENTED,
-		Error:   nil,
-		McOpsId: "",
+	if res.Code != pb.Code_OK {
+		t.Error("Not expected response code:", res.Code)
 	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
+	if res.McOpsId == "" {
+		t.Error("McOpsId is empty.")
 	}
 }
 
