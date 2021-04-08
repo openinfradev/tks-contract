@@ -8,14 +8,28 @@ import (
 	pb "github.com/openinfradev/tks-proto/pbgo"
 )
 
-var contractAccessor = contract.NewContractAccessor()
+var contractAccessor *contract.ContractAccessor
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
-	log.Println("Not implemented: CreateContract")
+	log.Println("Request 'CreateContract' for contractID", in.GetContractId())
+	mID, err := contractAccessor.Post(in.GetContractorName(),
+		contract.ContractId(in.GetContractId()),
+		in.GetAvailableServices(),
+		in.GetQuota())
+	if err != nil {
+		res := pb.CreateContractResponse{
+			Code: pb.Code_NOT_FOUND,
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}
+		return &res, err
+	}
 	res := pb.CreateContractResponse{
-		Code:  pb.Code_UNIMPLEMENTED,
-		Error: nil,
+		Code:    pb.Code_OK,
+		Error:   nil,
+		McOpsId: mID.String(),
 	}
 	return &res, nil
 }

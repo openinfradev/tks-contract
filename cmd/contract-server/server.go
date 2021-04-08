@@ -3,6 +3,7 @@ package main
 import (
 	"net"
 
+	"github.com/openinfradev/tks-contract/pkg/contract"
 	"github.com/openinfradev/tks-contract/pkg/log"
 	pb "github.com/openinfradev/tks-proto/pbgo"
 	"google.golang.org/grpc"
@@ -18,6 +19,8 @@ type server struct {
 
 func init() {
 	log.Initialize("tks-contract")
+	contractAccessor = contract.NewContractAccessor()
+	InsertMockupContracts(contractAccessor)
 }
 
 func main() {
