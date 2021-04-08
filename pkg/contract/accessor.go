@@ -51,8 +51,8 @@ func (c *Accessor) Post(contractorName string, id ID,
 // Not implemented yet.
 func (c *Accessor) Update(contractorName string, id ID,
 	availableServices []string, quota *pb.ContractQuota) error {
-	if _, exists := c.contracts[id]; exists {
-		return fmt.Errorf("Already exists contractId %s", id)
+	if _, exists := c.contracts[id]; !exists {
+		return fmt.Errorf("Not exists contractId %s", id)
 	}
 	c.contracts[id] = Contract{
 		ContractorName:    contractorName,
