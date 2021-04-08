@@ -33,22 +33,27 @@ func init() {
 	}
 }
 
+// Info logs in InfoLevel.
 func Info(v ...interface{}) {
 	logger.Info(v...)
 }
 
+// Warn logs in WarnLevel.
 func Warn(v ...interface{}) {
 	logger.Warn(v...)
 }
 
+// Debug logs in DebugLevel.
 func Debug(v ...interface{}) {
 	logger.Debug(v...)
 }
 
+// Error logs in ErrorLevel.
 func Error(v ...interface{}) {
 	logger.Debug(v...)
 }
 
+// Fatal logs in FatalLevel
 func Fatal(v ...interface{}) {
 	logger.Fatal(v...)
 }

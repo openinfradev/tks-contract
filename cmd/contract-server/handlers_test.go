@@ -24,7 +24,7 @@ func TestCreateContract(t *testing.T) {
 	}
 	res, err := s.CreateContract(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	if res.Code != pb.Code_OK {
@@ -50,7 +50,7 @@ func TestUpdateQuota(t *testing.T) {
 	}
 	res, err := s.UpdateQuota(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.UpdateQuotaResponse{
@@ -72,7 +72,7 @@ func TestUpdateServices(t *testing.T) {
 	}
 	res, err := s.UpdateServices(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.UpdateServicesResponse{
@@ -113,7 +113,7 @@ func TestGetQuota(t *testing.T) {
 	}
 	res, err := s.GetQuota(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.GetQuotaResponse{

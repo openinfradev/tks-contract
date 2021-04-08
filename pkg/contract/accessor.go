@@ -1,57 +1,62 @@
 package contract
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	pb "github.com/openinfradev/tks-proto/pbgo"
 )
 
-type ContractAccessor struct {
-	contracts map[ContractId]Contract
+// Accessor is an accessor to in-memory contracts.
+type Accessor struct {
+	contracts map[ID]Contract
 }
 
-func NewContractAccessor() *ContractAccessor {
-	return &ContractAccessor{
-		contracts: map[ContractId]Contract{},
+// NewContractAccessor returns new contract accessor's ptr.
+func NewContractAccessor() *Accessor {
+	return &Accessor{
+		contracts: map[ID]Contract{},
 	}
 }
 
-func (c ContractAccessor) Get(contractId ContractId) (*Contract, error) {
-	contract, exists := c.contracts[contractId]
+// Get returns contract data from in-memory map.
+func (c Accessor) Get(id ID) (*Contract, error) {
+	contract, exists := c.contracts[id]
 	if !exists {
-		return &Contract{}, errors.New(fmt.Sprintf("Not found contract for %s", contractId))
+		return &Contract{}, fmt.Errorf("Not found contract for %s", id)
 	}
 
 	return &contract, nil
 }
 
-func (c *ContractAccessor) Post(contractorName string, contractId ContractId,
-	availableServices []string, quota *pb.ContractQuota) (McOpsId, error) {
-	if _, exists := c.contracts[contractId]; exists {
-		return McOpsId{}, errors.New(fmt.Sprintf("Already exists contractId %s", contractId))
+// Post inserts new contract in in-memory map if contractId does not exist.
+func (c *Accessor) Post(contractorName string, id ID,
+	availableServices []string, quota *pb.ContractQuota) (McOpsID, error) {
+	if _, exists := c.contracts[id]; exists {
+		return McOpsID{}, fmt.Errorf("Already exists contractId %s", id)
 	}
-	newMcOpsId := GenerateMcOpsId()
-	c.contracts[contractId] = Contract{
+	newMcOpsID := GenerateMcOpsID()
+	c.contracts[id] = Contract{
 		ContractorName:    contractorName,
-		ContractId:        contractId,
+		ID:                id,
 		AvailableServices: availableServices,
 		Quota:             quota,
 		LastUpdatedTs:     &LastUpdatedTime{time.Now()},
-		McOpsId:           newMcOpsId,
+		McOpsID:           newMcOpsID,
 	}
-	return newMcOpsId, nil
+	return newMcOpsID, nil
 }
 
-func (c *ContractAccessor) Update(contractorName string, contractId ContractId,
+// Update updates contract data by contractID.
+// Not implemented yet.
+func (c *Accessor) Update(contractorName string, id ID,
 	availableServices []string, quota *pb.ContractQuota) error {
-	if _, exists := c.contracts[contractId]; exists {
-		return errors.New(fmt.Sprintf("Already exists contractId %s", contractId))
+	if _, exists := c.contracts[id]; exists {
+		return fmt.Errorf("Already exists contractId %s", id)
 	}
-	c.contracts[contractId] = Contract{
+	c.contracts[id] = Contract{
 		ContractorName:    contractorName,
-		ContractId:        contractId,
+		ID:                id,
 		AvailableServices: availableServices,
 		Quota:             quota,
 		LastUpdatedTs:     &LastUpdatedTime{time.Now()},
