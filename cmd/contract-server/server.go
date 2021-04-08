@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"net"
+	"strconv"
 
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	"github.com/openinfradev/tks-contract/pkg/log"
@@ -9,8 +11,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	port = ":50051"
+var (
+	port         int
+	enableMockup bool
 )
 
 type server struct {
@@ -18,12 +21,22 @@ type server struct {
 }
 
 func init() {
+	getFlags()
+
 	contractAccessor = contract.NewContractAccessor()
-	InsertMockupContracts(contractAccessor)
+	if enableMockup {
+		InsertMockupContracts(contractAccessor)
+	}
+}
+
+func getFlags() {
+	flag.IntVar(&port, "port", 50051, "service port")
+	flag.BoolVar(&enableMockup, "enable-mockup", false, "enable mockup contracts")
+	flag.Parse()
 }
 
 func main() {
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	log.Info("Starting to listen port ", port)
 	if err != nil {
 		log.Fatal("failed to listen: %v", err)
