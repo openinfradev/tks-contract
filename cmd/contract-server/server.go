@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	port         int
-	enableMockup bool
+	port         int  = 5000
+	enableMockup bool = false
 )
 
 type server struct {
@@ -21,7 +21,7 @@ type server struct {
 }
 
 func init() {
-	getFlags()
+	setFlags()
 
 	contractAccessor = contract.NewContractAccessor()
 	if enableMockup {
@@ -29,21 +29,21 @@ func init() {
 	}
 }
 
-func getFlags() {
+func setFlags() {
 	flag.IntVar(&port, "port", 50051, "service port")
 	flag.BoolVar(&enableMockup, "enable-mockup", false, "enable mockup contracts")
-	flag.Parse()
 }
 
 func main() {
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	log.Info("Starting to listen port ", port)
+	flag.Parse()
 	if err != nil {
-		log.Fatal("failed to listen: %v", err)
+		log.Fatal("failed to listen:", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterContractServiceServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
-		log.Fatal("failed to serve: %v", err)
+		log.Fatal("failed to serve:", err)
 	}
 }
