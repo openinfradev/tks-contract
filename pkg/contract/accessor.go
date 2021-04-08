@@ -27,7 +27,7 @@ func (c ContractAccessor) Get(contractId ContractId) (*Contract, error) {
 	return &contract, nil
 }
 
-func (c *ContractAccessor) Put(contractorName string, contractId ContractId,
+func (c *ContractAccessor) Post(contractorName string, contractId ContractId,
 	availableServices []string, quota *pb.ContractQuota) (McOpsId, error) {
 	if _, exists := c.contracts[contractId]; exists {
 		return McOpsId{}, errors.New(fmt.Sprintf("Already exists contractId %s", contractId))

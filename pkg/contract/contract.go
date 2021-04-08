@@ -35,7 +35,7 @@ func (ts *LastUpdatedTime) UnmarshalJSON(data []byte) error {
 }
 
 func (m McOpsId) String() string {
-	return m.String()
+	return uuid.UUID(m).String()
 }
 
 func (l LastUpdatedTime) Timestamppb() *timestamppb.Timestamp {
