@@ -24,7 +24,7 @@ func TestCreateContract(t *testing.T) {
 	}
 	res, err := s.CreateContract(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	if res.Code != pb.Code_OK {
@@ -50,7 +50,7 @@ func TestUpdateQuota(t *testing.T) {
 	}
 	res, err := s.UpdateQuota(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.UpdateQuotaResponse{
@@ -72,7 +72,7 @@ func TestUpdateServices(t *testing.T) {
 	}
 	res, err := s.UpdateServices(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.UpdateServicesResponse{
@@ -89,14 +89,14 @@ func TestGetContract(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	req := pb.GetContractRequest{
-		ContractId: "cbp-100001-xdkzkl",
+		ContractId: "cbp-100002-xdkzkl",
 	}
 	res, _ := s.GetContract(ctx, &req)
 
 	expected := &pb.GetContractResponse{
 		Code: pb.Code_NOT_FOUND,
 		Error: &pb.Error{
-			Msg: "Not found contract for cbp-100001-xdkzkl",
+			Msg: "Not found contract for cbp-100002-xdkzkl",
 		},
 	}
 	if !reflect.DeepEqual(expected, res) {
@@ -113,7 +113,7 @@ func TestGetQuota(t *testing.T) {
 	}
 	res, err := s.GetQuota(ctx, &req)
 	if err != nil {
-		t.Error("error occured " + err.Error())
+		t.Error("error occurred " + err.Error())
 	}
 
 	expected := &pb.GetQuotaResponse{

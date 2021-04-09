@@ -24,9 +24,6 @@ func init() {
 	setFlags()
 
 	contractAccessor = contract.NewContractAccessor()
-	if enableMockup {
-		InsertMockupContracts(contractAccessor)
-	}
 }
 
 func setFlags() {
@@ -40,6 +37,11 @@ func main() {
 	flag.Parse()
 	if err != nil {
 		log.Fatal("failed to listen:", err)
+	}
+	if enableMockup {
+		if err := InsertMockupContracts(contractAccessor); err != nil {
+			log.Warn("failed to create mockup data:", err)
+		}
 	}
 	s := grpc.NewServer()
 	pb.RegisterContractServiceServer(s, &server{})

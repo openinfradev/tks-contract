@@ -8,13 +8,13 @@ import (
 	pb "github.com/openinfradev/tks-proto/pbgo"
 )
 
-var contractAccessor *contract.ContractAccessor
+var contractAccessor *contract.Accessor
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Debug("Request 'CreateContract' for contractID", in.GetContractId())
 	mID, err := contractAccessor.Post(in.GetContractorName(),
-		contract.ContractId(in.GetContractId()),
+		contract.ID(in.GetContractId()),
 		in.GetAvailableServices(),
 		in.GetQuota())
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 // UpdateQuota implements pbgo.ContractService.UpdateQuota gRPC
 func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*pb.UpdateQuotaResponse, error) {
-	log.Debug("Not implemented: UpdateQuota")
+	log.Warn("Not implemented: UpdateQuota")
 	res := pb.UpdateQuotaResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,
@@ -46,7 +46,7 @@ func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*p
 
 // UpdateServices implements pbgo.ContractService.UpdateServices gRPC
 func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesRequest) (*pb.UpdateServicesResponse, error) {
-	log.Debug("Not implemented: UpdateServices")
+	log.Warn("Not implemented: UpdateServices")
 	res := pb.UpdateServicesResponse{
 		Code:  pb.Code_UNIMPLEMENTED,
 		Error: nil,
@@ -56,8 +56,8 @@ func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesReques
 
 // GetContract implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*pb.GetContractResponse, error) {
-	log.Debug("Request 'GetContract' for contractID", in.GetContractId())
-	doc, err := contractAccessor.Get(contract.ContractId(in.GetContractId()))
+	log.Warn("Request 'GetContract' for contractID", in.GetContractId())
+	doc, err := contractAccessor.Get(contract.ID(in.GetContractId()))
 	if err != nil {
 		res := pb.GetContractResponse{
 			Code: pb.Code_NOT_FOUND,
@@ -71,10 +71,10 @@ func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*p
 		Code:              pb.Code_OK,
 		Error:             nil,
 		ContractorName:    doc.ContractorName,
-		ContractId:        string(doc.ContractId),
+		ContractId:        string(doc.ID),
 		Quota:             doc.Quota,
 		AvailableServices: doc.AvailableServices,
-		McOpsId:           doc.McOpsId.String(),
+		McOpsId:           doc.McOpsID.String(),
 		LastUpdatedTs:     doc.LastUpdatedTs.Timestamppb(),
 	}
 	return &res, nil
