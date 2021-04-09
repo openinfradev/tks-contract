@@ -1,10 +1,9 @@
-module tks-contract
+module github.com/openinfradev/tks-contract
 
 go 1.16
 
 require (
 	github.com/google/uuid v1.2.0
-	github.com/openinfradev/tks-contract v0.0.0
 	github.com/openinfradev/tks-proto v0.0.3
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/grpc v1.36.1
