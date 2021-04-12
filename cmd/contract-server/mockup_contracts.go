@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/openinfradev/tks-contract/pkg/contract"
-	"github.com/openinfradev/tks-contract/pkg/log"
-	"github.com/openinfradev/tks-proto/pbgo"
+	"github.com/sktelecom/tks-contract/pkg/contract"
+	"github.com/sktelecom/tks-contract/pkg/log"
+	"github.com/sktelecom/tks-proto/pbgo"
 )
 
 // InsertMockupContracts create mockup contract data in-memory.
