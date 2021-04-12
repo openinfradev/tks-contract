@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
 func TestCreateContract(t *testing.T) {

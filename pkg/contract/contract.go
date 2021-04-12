@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/sktelecom/tks-proto/pbgo"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 

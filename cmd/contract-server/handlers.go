@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/openinfradev/tks-contract/pkg/contract"
-	"github.com/openinfradev/tks-contract/pkg/log"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	"github.com/sktelecom/tks-contract/pkg/contract"
+	"github.com/sktelecom/tks-contract/pkg/log"
+	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
 var contractAccessor *contract.Accessor

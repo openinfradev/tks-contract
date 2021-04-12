@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
 // Accessor is an accessor to in-memory contracts.
