@@ -17,7 +17,6 @@ var (
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Debug("Request 'CreateContract' for contractID", in.GetContractId())
-	var cspID string
 	idRes, err := infoClient.CreateCSPInfo(ctx, in.GetContractId(), in.GetCspName(), in.GetCspAuth())
 	if err != nil || idRes.GetCode() != pb.Code_OK_UNSPECIFIED {
 		res := pb.CreateContractResponse{
@@ -46,7 +45,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	res := pb.CreateContractResponse{
 		Code:  pb.Code_OK_UNSPECIFIED,
 		Error: nil,
-		CspId: cspID,
+		CspId: idRes.GetId(),
 	}
 	return &res, nil
 }
