@@ -4,17 +4,34 @@ import (
 	"context"
 
 	"github.com/sktelecom/tks-contract/pkg/contract"
+	gc "github.com/sktelecom/tks-contract/pkg/grpc-client"
 	"github.com/sktelecom/tks-contract/pkg/log"
 	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
-var contractAccessor *contract.Accessor
+var (
+	contractAccessor *contract.Accessor
+	infoClient       *gc.InfoClient
+)
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Debug("Request 'CreateContract' for contractID", in.GetContractId())
-	mID, err := contractAccessor.Post(in.GetContractorName(),
+	var cspID string
+	idRes, err := infoClient.CreateCSPInfo(ctx, in.GetContractId(), in.GetCspName(), in.GetCspAuth())
+	if err != nil || idRes.GetCode() != pb.Code_OK_UNSPECIFIED {
+		res := pb.CreateContractResponse{
+			Code: idRes.GetCode(),
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}
+		return &res, err
+	}
+	log.Info("newly created CSP ID:", idRes.GetId())
+	err = contractAccessor.Post(in.GetContractorName(),
 		contract.ID(in.GetContractId()),
+		contract.ID(idRes.GetId()),
 		in.GetAvailableServices(),
 		in.GetQuota())
 	if err != nil {
@@ -27,9 +44,9 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		return &res, err
 	}
 	res := pb.CreateContractResponse{
-		Code:    pb.Code_OK,
-		Error:   nil,
-		McOpsId: mID.String(),
+		Code:  pb.Code_OK_UNSPECIFIED,
+		Error: nil,
+		CspId: cspID,
 	}
 	return &res, nil
 }
@@ -68,14 +85,16 @@ func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*p
 		return &res, err
 	}
 	res := pb.GetContractResponse{
-		Code:              pb.Code_OK,
-		Error:             nil,
-		ContractorName:    doc.ContractorName,
-		ContractId:        string(doc.ID),
-		Quota:             doc.Quota,
-		AvailableServices: doc.AvailableServices,
-		McOpsId:           doc.McOpsID.String(),
-		LastUpdatedTs:     doc.LastUpdatedTs.Timestamppb(),
+		Code:  pb.Code_OK_UNSPECIFIED,
+		Error: nil,
+		Contract: &pb.Contract{
+			ContractorName:    doc.ContractorName,
+			ContractId:        string(doc.ID),
+			Quota:             doc.Quota,
+			AvailableServices: doc.AvailableServices,
+			CspId:             string(doc.CspID),
+			LastUpdatedTs:     doc.LastUpdatedTs.Timestamppb(),
+		},
 	}
 	return &res, nil
 }

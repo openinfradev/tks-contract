@@ -27,11 +27,11 @@ func TestCreateContract(t *testing.T) {
 		t.Error("error occurred " + err.Error())
 	}
 
-	if res.Code != pb.Code_OK {
+	if res.Code != pb.Code_OK_UNSPECIFIED {
 		t.Error("Not expected response code:", res.Code)
 	}
-	if res.McOpsId == "" {
-		t.Error("McOpsId is empty.")
+	if res.CspId == "" {
+		t.Error("CspId is empty.")
 	}
 }
 
