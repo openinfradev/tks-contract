@@ -8,7 +8,8 @@ import (
 
 // InsertMockupContracts create mockup contract data in-memory.
 func InsertMockupContracts(contract *contract.Accessor) error {
-	mID, err := contractAccessor.Post("mock1", "tks-1000001", []string{"lma"},
+	err := contractAccessor.Post("mock1", "tks-1000001", "xxxx-xxxxxxx-xxxxx-xxxx",
+		[]string{"lma"},
 		&pbgo.ContractQuota{
 			Cpu:    14,
 			Memory: 14,
@@ -16,6 +17,6 @@ func InsertMockupContracts(contract *contract.Accessor) error {
 	if err != nil {
 		return err
 	}
-	log.Info("Create Mockup data! new contract. mID:", mID)
+	log.Info("Create Mockup data!")
 	return nil
 }

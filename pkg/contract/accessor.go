@@ -30,21 +30,20 @@ func (c Accessor) Get(id ID) (*Contract, error) {
 }
 
 // Post inserts new contract in in-memory map if contractId does not exist.
-func (c *Accessor) Post(contractorName string, id ID,
-	availableServices []string, quota *pb.ContractQuota) (McOpsID, error) {
+func (c *Accessor) Post(contractorName string, id ID, cspID ID,
+	availableServices []string, quota *pb.ContractQuota) error {
 	if _, exists := c.contracts[id]; exists {
-		return McOpsID{}, fmt.Errorf("Already exists contractId %s", id)
+		return fmt.Errorf("Already exists contractId %s", id)
 	}
-	newMcOpsID := GenerateMcOpsID()
 	c.contracts[id] = Contract{
 		ContractorName:    contractorName,
 		ID:                id,
 		AvailableServices: availableServices,
 		Quota:             quota,
 		LastUpdatedTs:     &LastUpdatedTime{time.Now()},
-		McOpsID:           newMcOpsID,
+		CspID:             cspID,
 	}
-	return newMcOpsID, nil
+	return nil
 }
 
 // Update updates contract data by contractID.
