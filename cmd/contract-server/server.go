@@ -37,9 +37,9 @@ func setFlags() {
 }
 
 func main() {
+	flag.Parse()
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	log.Info("Starting to listen port ", port)
-	flag.Parse()
 	if err != nil {
 		log.Fatal("failed to listen:", err)
 	}
