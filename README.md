@@ -21,7 +21,7 @@ This service communicates based on gRPC. You can refer to the proto files in [tk
 
 ```
 go install -v ./...
-contract-server -port 9110
+server -port 9110
 ```
 ### For docker users
 ```
@@ -29,7 +29,7 @@ TAGS=$(curl --silent "https://api.github.com/repos/sktelecom/tks-contract/tags" 
 docker pull docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS
 docker run --name tks-contract -p 9110:9110 -d \
   docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS \
-  contract-server \
+  server \
   # -port 9110
 ```
 
