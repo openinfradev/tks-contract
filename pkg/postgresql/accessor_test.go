@@ -50,13 +50,18 @@ func TestInsertWithTransaction(t *testing.T) {
 	mock.ExpectCommit()
 
 	tx, err := accessor.BeginTx()
+	if err != nil {
+		t.Errorf("an error was not expected while beginning transaction %s", err)
+	}
 	count, err := accessor.Insert(tx, "records(name, id, score)",
 		"gopher",
 		"828cec77-1da5-4ba6-90d0-270d71be3c55",
 		50)
-	tx.Commit()
 	if err != nil {
 		t.Errorf("error was not expected while creating contract: %s", err)
+	}
+	if err = tx.Commit(); err != nil {
+		t.Errorf("error was not expected while committing transaction: %s", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulilled expectations: %s", err)
@@ -92,7 +97,9 @@ func TestGet(t *testing.T) {
 			name, id string
 			score    int
 		)
-		rows.Scan(&name, &id, &score)
+		if err = rows.Scan(&name, &id, &score); err != nil {
+			t.Errorf("error was not expected while scanning rows: %s", err)
+		}
 		t.Logf("scanned row: %s %s %d", name, id, score)
 	}
 }

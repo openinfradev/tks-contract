@@ -44,7 +44,10 @@ func (p *Accessor) Get(tx *sql.Tx, fields, table string, conditions map[string]i
 
 	rows, err := tx.Query(query)
 	if err != nil {
-		tx.Rollback()
+		if errRollback := tx.Rollback(); errRollback != nil {
+			log.Fatal("failed to rollback transaction: ", errRollback)
+			return nil, errRollback
+		}
 		return nil, err
 	}
 	return rows, nil
@@ -65,7 +68,10 @@ func (p *Accessor) Insert(tx *sql.Tx, table string, values ...interface{}) (int6
 	}
 
 	if res, err = tx.Exec(query, values...); err != nil {
-		tx.Rollback()
+		if errRollback := tx.Rollback(); errRollback != nil {
+			log.Fatal("failed to rollback transaction: ", errRollback)
+			return 0, errRollback
+		}
 		return 0, err
 	}
 	return res.RowsAffected()
@@ -90,7 +96,10 @@ func (p *Accessor) Delete(tx *sql.Tx, table string, conditions map[string]interf
 	}
 
 	if res, err = tx.Exec(query, conditionValues...); err != nil {
-		tx.Rollback()
+		if errRollback := tx.Rollback(); errRollback != nil {
+			log.Fatal("failed to rollback transaction: ", errRollback)
+			return 0, errRollback
+		}
 		return 0, err
 	}
 	return res.RowsAffected()
@@ -113,7 +122,10 @@ func (p *Accessor) Update(tx *sql.Tx, table string, values, conditions map[strin
 		return res.RowsAffected()
 	}
 	if res, err = tx.Exec(query, args...); err != nil {
-		tx.Rollback()
+		if errRollback := tx.Rollback(); errRollback != nil {
+			log.Fatal("failed to rollback transaction: ", errRollback)
+			return 0, errRollback
+		}
 		return 0, err
 	}
 	return res.RowsAffected()
