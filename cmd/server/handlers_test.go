@@ -5,16 +5,25 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	gc "github.com/sktelecom/tks-contract/pkg/grpc-client"
 	pb "github.com/sktelecom/tks-proto/pbgo"
+	mock "github.com/sktelecom/tks-proto/pbgo/mock"
 )
 
 func TestCreateContract(t *testing.T) {
 	s := server{}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
+	mockInfoClient := mock.NewMockInfoServiceClient(ctrl)
+	infoClient = gc.New(nil, mockInfoClient)
 	defer cancel()
 	req := pb.CreateContractRequest{
 		ContractorName: "Tester",
 		ContractId:     "cbp-100001-xdkzkl",
+		CspName:        "aws",
+		CspAuth:        "{'token':'abcdefghijklmnop'}",
 		Quota: &pb.ContractQuota{
 			Cpu:    20,
 			Memory: 40,
@@ -22,6 +31,19 @@ func TestCreateContract(t *testing.T) {
 			Fs:     12800000,
 		},
 	}
+	// ctx, in.GetContractId(), in.GetCspName(), in.GetCspAuth())
+	mockInfoClient.EXPECT().CreateCSPInfo(
+		gomock.Any(),
+		&pb.CreateCSPInfoRequest{
+			ContractId: req.ContractId,
+			CspName:    req.CspName,
+			Auth:       req.CspAuth,
+		},
+	).Return(&pb.IDResponse{
+		Code:  pb.Code_OK_UNSPECIFIED,
+		Error: nil,
+		Id:    "a254a66e-7225-4527-bf4c-9b5494c99b37",
+	}, nil)
 	res, err := s.CreateContract(ctx, &req)
 	if err != nil {
 		t.Error("error occurred " + err.Error())

@@ -16,33 +16,36 @@ type InfoClient struct {
 	sc pb.InfoServiceClient
 }
 
-func NewInfoClient(address string, port int, tls bool, caFile string) (*InfoClient, error) {
+func New(cc *grpc.ClientConn, sc pb.InfoServiceClient) *InfoClient {
+	return &InfoClient{
+		cc: cc,
+		sc: sc,
+	}
+}
+
+func CreateClientsObject(address string, port int, tls bool, caFile string) (*grpc.ClientConn, pb.InfoServiceClient, error) {
 	opts := grpc.WithInsecure()
 	if tls {
 		if caFile == "" {
 			log.Fatal("CA file is null. CA file must be exist when tls is on.")
-			return &InfoClient{}, fmt.Errorf("CA file not found.")
+			return nil, nil, fmt.Errorf("CA file not found.")
 		} else {
 			creds, err := credentials.NewServerTLSFromFile(caFile, "")
 			if err != nil {
 				log.Fatal("Error while loading CA trust certificate: ", err.Error())
-				return &InfoClient{}, err
+				return nil, nil, err
 			}
 			opts = grpc.WithTransportCredentials(creds)
 		}
 	}
 	address = fmt.Sprintf("%s:%d", address, port)
-	log.Info("gRPC server address is ", address)
 	cc, err := grpc.Dial(address, opts)
 	if err != nil {
 		log.Fatal("Could not connect to gRPC server", err)
-		return &InfoClient{}, err
+		return nil, nil, err
 	}
 	sc := pb.NewInfoServiceClient(cc)
-	return &InfoClient{
-		cc: cc,
-		sc: sc,
-	}, nil
+	return cc, sc, nil
 }
 
 func (c *InfoClient) CreateCSPInfo(ctx context.Context, contractId string,
