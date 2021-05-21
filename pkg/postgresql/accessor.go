@@ -34,15 +34,15 @@ func (p *Accessor) Get(tx *sql.Tx, fields, table string, conditions map[string]i
 		return p.getAll(tx, fields, table)
 	}
 
-	args := getValueSliceFromMaps(conditions)
-	conditionSql := getVarSyntaxFromMaps(conditions)
-	query := fmt.Sprintf(`SELECT %s FROM %s WHERE %s`, fields, table, conditionSql[0])
+	conditionValues := getValueSliceFromMaps(conditions)
+	conditionKeySql := getVarSyntaxFromMaps(conditions)
+	query := fmt.Sprintf(`SELECT %s FROM %s WHERE %s`, fields, table, conditionKeySql[0])
 
 	if tx == nil {
-		return p.db.Query(query, args)
+		return p.db.Query(query, conditionValues...)
 	}
 
-	rows, err := tx.Query(query, args)
+	rows, err := tx.Query(query, conditionValues...)
 	if err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			log.Fatal("failed to rollback transaction: ", errRollback)
@@ -111,17 +111,17 @@ func (p *Accessor) Update(tx *sql.Tx, table string, values, conditions map[strin
 		res sql.Result
 		err error
 	)
-	sqlArr := getVarSyntaxFromMaps(values, conditions)
-	args := getValueSliceFromMaps(values, conditions)
-	query := fmt.Sprintf(`UPDATE %s SET %s WHERE %s`, table, sqlArr[0], sqlArr[1])
+	conditionKeySql := getVarSyntaxFromMaps(values, conditions)
+	conditionValues := getValueSliceFromMaps(values, conditions)
+	query := fmt.Sprintf(`UPDATE %s SET %s WHERE %s`, table, conditionKeySql[0], conditionKeySql[1])
 	if tx == nil {
-		if res, err = p.db.Exec(query, args...); err != nil {
+		if res, err = p.db.Exec(query, conditionValues...); err != nil {
 			log.Fatal(err)
 			return 0, err
 		}
 		return res.RowsAffected()
 	}
-	if res, err = tx.Exec(query, args...); err != nil {
+	if res, err = tx.Exec(query, conditionValues...); err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			log.Fatal("failed to rollback transaction: ", errRollback)
 			return 0, errRollback
