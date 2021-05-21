@@ -9,20 +9,27 @@ This service communicates based on gRPC. You can refer to the proto files in [tk
 
 ## Quick Start
 
+### Development environment
+* Installed docker 20.x
+* Running postgresql and Initilizing database.
+  ```
+    docker run -p 5432:5432 --name postgres -e POSTGRES_PASSWORD=password -d postgres
+    docker cp scripts/script.sql postgres:/script.sql
+    docker exec -ti postgres psql -U postgres -a -f script.sql
+  ``` 
 ### For go developers
 
 ```
 go install -v ./...
-contract-server -port 50051 -enable-mockup
+server -port 9110
 ```
 ### For docker users
 ```
 TAGS=$(curl --silent "https://api.github.com/repos/sktelecom/tks-contract/tags" | grep name | head -1 |cut -d '"' -f 4)
 docker pull docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS
-docker run --name tks-contract -p 50051:50051 -d \
+docker run --name tks-contract -p 9110:9110 -d \
   docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS \
-  contract-server \
-  # -enable-mockup \
-  # -port 50051
+  server \
+  # -port 9110
 ```
 
