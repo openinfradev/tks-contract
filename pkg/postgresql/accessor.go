@@ -30,19 +30,19 @@ func (p *Accessor) Close() error {
 // Get returns result of querying from DB.
 // Support both non-transactional and transactional queries.
 func (p *Accessor) Get(tx *sql.Tx, fields, table string, conditions map[string]interface{}) (*sql.Rows, error) {
-	var query string
-	if len(conditions) != 0 {
-		conditionSql := getVarSyntaxFromMaps(conditions)
-		query = fmt.Sprintf(`SELECT %s FROM %s WHERE %s`, fields, table, conditionSql[0])
-	} else {
-		query = fmt.Sprintf(`SELECT %s FROM %s`, fields, table)
+	if len(conditions) == 0 {
+		return p.getAll(tx, fields, table)
 	}
+
+	args := getValueSliceFromMaps(conditions)
+	conditionSql := getVarSyntaxFromMaps(conditions)
+	query := fmt.Sprintf(`SELECT %s FROM %s WHERE %s`, fields, table, conditionSql[0])
 
 	if tx == nil {
-		return p.db.Query(query)
+		return p.db.Query(query, args)
 	}
 
-	rows, err := tx.Query(query)
+	rows, err := tx.Query(query, args)
 	if err != nil {
 		if errRollback := tx.Rollback(); errRollback != nil {
 			log.Fatal("failed to rollback transaction: ", errRollback)
@@ -131,16 +131,36 @@ func (p *Accessor) Update(tx *sql.Tx, table string, values, conditions map[strin
 	return res.RowsAffected()
 }
 
+// Query quries rows in DB with pure SQL statement.
 func (p *Accessor) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return p.db.Query(query, args...)
 }
 
+// BeginTx returns a new transaction.
 func (p *Accessor) BeginTx() (*sql.Tx, error) {
 	return p.db.Begin()
 }
 
+// CommitTx commits a transaction.
 func (p *Accessor) CommitTx(tx *sql.Tx) error {
 	return tx.Commit()
+}
+
+func (p *Accessor) getAll(tx *sql.Tx, fields, table string) (*sql.Rows, error) {
+	query := fmt.Sprintf(`SELECT %s FROM %s`, fields, table)
+
+	if tx == nil {
+		return p.db.Query(query)
+	}
+	rows, err := tx.Query(query)
+	if err != nil {
+		if errRollback := tx.Rollback(); errRollback != nil {
+			log.Fatal("failed to rollback transaction: ", errRollback)
+			return nil, errRollback
+		}
+		return nil, err
+	}
+	return rows, nil
 }
 
 // getVarSyntax makes "$1, $2, $3..." string for SQL query.
