@@ -141,9 +141,12 @@ func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota ResourceQuota
 		Where("contract_id = ?", contractID).
 		Updates(values)
 
-	curr, err := x.GetResourceQuota(contractID)
+	if res.Error != nil || res.RowsAffected == 0 {
+		return nil, nil, fmt.Errorf("nothing updated in resource_quota for contract id %s", contractID)
+	}
 
-	return &prev, &curr, res.Error
+	curr, err := x.GetResourceQuota(contractID)
+	return &prev, &curr, err
 }
 
 // UpdateAvailableServices updates available service list and resource quota.
