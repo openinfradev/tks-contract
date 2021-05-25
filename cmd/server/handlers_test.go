@@ -2,26 +2,48 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/sktelecom/tks-contract/pkg/contract"
 	gc "github.com/sktelecom/tks-contract/pkg/grpc-client"
 	pb "github.com/sktelecom/tks-proto/pbgo"
 	mock "github.com/sktelecom/tks-proto/pbgo/mock"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
+var contractID string
+
+func getAccessor() (*contract.Accessor, error) {
+	dsn := "host=localhost user=postgres password=password dbname=tks port=5432 sslmode=disable TimeZone=Asia/Seoul"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return contract.New(db), nil
+}
 func TestCreateContract(t *testing.T) {
+	var err error
 	s := server{}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
 	mockInfoClient := mock.NewMockInfoServiceClient(ctrl)
 	infoClient = gc.New(nil, mockInfoClient)
+	contractAccessor, err = getAccessor()
+	if err != nil {
+		t.Errorf("unexpected error %s", err)
+	}
 	defer cancel()
+
+	contractorName := getRandomString("handler")
 	req := pb.CreateContractRequest{
-		ContractorName: "Tester",
-		ContractId:     "cbp-100001-xdkzkl",
+		ContractorName: contractorName,
 		CspName:        "aws",
 		CspAuth:        "{'token':'abcdefghijklmnop'}",
 		Quota: &pb.ContractQuota{
@@ -30,15 +52,12 @@ func TestCreateContract(t *testing.T) {
 			Block:  12800000,
 			Fs:     12800000,
 		},
+		AvailableServices: []string{"lma"},
 	}
 	// ctx, in.GetContractId(), in.GetCspName(), in.GetCspAuth())
 	mockInfoClient.EXPECT().CreateCSPInfo(
 		gomock.Any(),
-		&pb.CreateCSPInfoRequest{
-			ContractId: req.ContractId,
-			CspName:    req.CspName,
-			Auth:       req.CspAuth,
-		},
+		gomock.Any(),
 	).Return(&pb.IDResponse{
 		Code:  pb.Code_OK_UNSPECIFIED,
 		Error: nil,
@@ -55,19 +74,23 @@ func TestCreateContract(t *testing.T) {
 	if res.CspId == "" {
 		t.Error("CspId is empty.")
 	}
+
+	contractID = res.ContractId
 }
 
 func TestUpdateQuota(t *testing.T) {
+	var err error
 	s := server{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	contractAccessor, err = getAccessor()
+	if err != nil {
+		t.Errorf("unexpected error %s", err)
+	}
 	req := pb.UpdateQuotaRequest{
-		ContractId: "cbp-100001-xdkzkl",
+		ContractId: contractID,
 		Quota: &pb.ContractQuota{
-			Cpu:    20,
-			Memory: 40,
-			Block:  12800000,
-			Fs:     12800000,
+			Cpu: 40,
 		},
 	}
 	res, err := s.UpdateQuota(ctx, &req)
@@ -76,8 +99,20 @@ func TestUpdateQuota(t *testing.T) {
 	}
 
 	expected := &pb.UpdateQuotaResponse{
-		Code:  pb.Code_UNIMPLEMENTED,
+		Code:  pb.Code_OK_UNSPECIFIED,
 		Error: nil,
+		PrevQuota: &pb.ContractQuota{
+			Cpu:    20,
+			Memory: 40,
+			Block:  12800000,
+			Fs:     12800000,
+		},
+		CurrentQuota: &pb.ContractQuota{
+			Cpu:    40,
+			Memory: 40,
+			Block:  12800000,
+			Fs:     12800000,
+		},
 	}
 	if !reflect.DeepEqual(expected, res) {
 		t.Errorf("%v != %v", expected, res)
@@ -85,12 +120,17 @@ func TestUpdateQuota(t *testing.T) {
 }
 
 func TestUpdateServices(t *testing.T) {
+	var err error
 	s := server{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	contractAccessor, err = getAccessor()
+	if err != nil {
+		t.Errorf("unexpected error %s", err)
+	}
 	req := pb.UpdateServicesRequest{
-		ContractId:        "cbp-100001-xdkzkl",
-		AvailableServices: []string{"lma"},
+		ContractId:        contractID,
+		AvailableServices: []string{"lma", "servicemesh"},
 	}
 	res, err := s.UpdateServices(ctx, &req)
 	if err != nil {
@@ -98,15 +138,17 @@ func TestUpdateServices(t *testing.T) {
 	}
 
 	expected := &pb.UpdateServicesResponse{
-		Code:  pb.Code_UNIMPLEMENTED,
-		Error: nil,
+		Code:            pb.Code_OK_UNSPECIFIED,
+		Error:           nil,
+		PrevServices:    []string{"lma"},
+		CurrentServices: []string{"lma", "servicemesh"},
 	}
 	if !reflect.DeepEqual(expected, res) {
 		t.Errorf("%v != %v", expected, res)
 	}
 }
 
-func TestGetContract(t *testing.T) {
+func TestGetContract_InvalidArgument(t *testing.T) {
 	s := server{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -116,9 +158,9 @@ func TestGetContract(t *testing.T) {
 	res, _ := s.GetContract(ctx, &req)
 
 	expected := &pb.GetContractResponse{
-		Code: pb.Code_NOT_FOUND,
+		Code: pb.Code_INVALID_ARGUMENT,
 		Error: &pb.Error{
-			Msg: "Not found contract for cbp-100002-xdkzkl",
+			Msg: "invalid contract ID cbp-100002-xdkzkl",
 		},
 	}
 	if !reflect.DeepEqual(expected, res) {
@@ -131,7 +173,7 @@ func TestGetQuota(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	req := pb.GetQuotaRequest{
-		ContractId: "cbp-100001-xdkzkl",
+		ContractId: contractID,
 	}
 	res, err := s.GetQuota(ctx, &req)
 	if err != nil {
@@ -139,10 +181,24 @@ func TestGetQuota(t *testing.T) {
 	}
 
 	expected := &pb.GetQuotaResponse{
-		Code:  pb.Code_UNIMPLEMENTED,
+		Code:  pb.Code_OK_UNSPECIFIED,
 		Error: nil,
+		Quota: &pb.ContractQuota{
+			Cpu:      40,
+			Memory:   40,
+			Block:    12800000,
+			BlockSsd: 0,
+			Fs:       12800000,
+			FsSsd:    0,
+		},
 	}
 	if !reflect.DeepEqual(expected, res) {
 		t.Errorf("%v != %v", expected, res)
 	}
+}
+
+func getRandomString(prefix string) string {
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+	return fmt.Sprintf("%s-%d", prefix, r.Int31n(1000000000))
 }

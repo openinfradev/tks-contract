@@ -61,7 +61,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 // UpdateQuota implements pbgo.ContractService.UpdateQuota gRPC
 func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*pb.UpdateQuotaResponse, error) {
-	log.Info("Request 'UpdateQuota' for contract id", in.GetContractId())
+	log.Info("Request 'UpdateQuota' for contract id ", in.GetContractId())
 	contractID, err := uuid.Parse(in.GetContractId())
 	if err != nil {
 		res := pb.UpdateQuotaResponse{
@@ -101,7 +101,7 @@ func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*p
 
 // UpdateServices implements pbgo.ContractService.UpdateServices gRPC
 func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesRequest) (*pb.UpdateServicesResponse, error) {
-	log.Info("Request 'UpdateServices' for contract id", in.GetContractId())
+	log.Info("Request 'UpdateServices' for contract id ", in.GetContractId())
 	contractID, err := uuid.Parse(in.GetContractId())
 	if err != nil {
 		res := pb.UpdateServicesResponse{
@@ -132,7 +132,7 @@ func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesReques
 
 // GetContract implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*pb.GetContractResponse, error) {
-	log.Info("Request 'GetContract' for contractID", in.GetContractId())
+	log.Info("Request 'GetContract' for contract id ", in.GetContractId())
 	contractID, err := uuid.Parse(in.GetContractId())
 	if err != nil {
 		res := pb.GetContractResponse{
@@ -163,7 +163,7 @@ func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*p
 
 // GetQuota implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQuotaResponse, error) {
-	log.Info("Request 'GetQuota' for contractID", in.GetContractId())
+	log.Info("Request 'GetQuota' for contract id ", in.GetContractId())
 	contractID, err := uuid.Parse(in.GetContractId())
 	if err != nil {
 		return &pb.GetQuotaResponse{

@@ -9,7 +9,7 @@ require (
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/sktelecom/tks-proto v0.0.4-0.20210521035433-4f103f33ec76
+	github.com/sktelecom/tks-proto v0.0.4-0.20210525084545-97b649fb981e
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
