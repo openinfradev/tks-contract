@@ -13,7 +13,6 @@ type Contract struct {
 	ID                uuid.UUID      `gorm:"primarykey;type:uuid;default:uuid_generate_v4()"`
 	ContractorName    string         `gorm:"uniqueIndex"`
 	AvailableServices pq.StringArray `gorm:"type:text[]"`
-	CspID             uuid.UUID      `gorm:"type:uuid"`
 	UpdatedAt         time.Time
 	CreatedAt         time.Time
 }

@@ -1,7 +1,10 @@
 package contract_test
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -9,6 +12,8 @@ import (
 
 	"github.com/sktelecom/tks-contract/pkg/contract"
 )
+
+var contractID uuid.UUID
 
 func getAccessor() (*contract.Accessor, error) {
 	dsn := "host=localhost user=postgres password=password dbname=tks port=5432 sslmode=disable TimeZone=Asia/Seoul"
@@ -18,41 +23,68 @@ func getAccessor() (*contract.Accessor, error) {
 	}
 	return contract.New(db), nil
 }
-func TestCreate(t *testing.T) {
+func TestCreateContract(t *testing.T) {
 	accessor, err := getAccessor()
 	if err != nil {
 		t.Errorf("an error was unexpected while initilizing database %s", err)
 	}
-	contractID, err := accessor.Create("tester2", []string{"lma"}, uuid.MustParse("677dee5f-f224-482e-8aad-fd312cba19fe"))
+	quota := contract.ResourceQuotaParam{
+		Cpu:    256,
+		Memory: 12800000,
+		Block:  12800000,
+		Fs:     12800000,
+	}
+	contractName := getRandomString("gotest")
+	contractID, err = accessor.Create(contractName, []string{"lma"}, quota)
 	if err != nil {
 		t.Errorf("an error was unexpected while creating new contract: %s", err)
 	}
 	t.Logf("new contract id: %s", contractID)
 }
 
-func TestUpdate(t *testing.T) {
+func TestUpdateAvailableServices(t *testing.T) {
 	accessor, err := getAccessor()
 	if err != nil {
 		t.Errorf("an error was unexpected while initilizing database %s", err)
 	}
-	err = accessor.Update(uuid.MustParse("edcaa975-dde4-4c4d-94f7-36bc38fe7064"),
-		[]string{"lma", "sm"})
-
+	_, _, err = accessor.UpdateAvailableServices(contractID, []string{"lma", "sm"})
 	if err != nil {
 		t.Errorf("an error was unexpected while querying contract data %s", err)
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestUpdateResourceQuota(t *testing.T) {
 	accessor, err := getAccessor()
 	if err != nil {
 		t.Errorf("an error was unexpected while initilizing database %s", err)
 	}
-	contract, err := accessor.Get(uuid.MustParse("edcaa975-dde4-4c4d-94f7-36bc38fe7064"))
+	quota := contract.ResourceQuotaParam{
+		Cpu:    128,
+		Memory: 1280000,
+	}
+	_, _, err = accessor.UpdateResourceQuota(contractID, quota)
+
+	if err != nil {
+		t.Errorf("an error was unexpected while querying contract data %s", err)
+	}
+}
+func TestGetContract(t *testing.T) {
+	accessor, err := getAccessor()
+	if err != nil {
+		t.Errorf("an error was unexpected while initilizing database %s", err)
+	}
+	contract, err := accessor.GetContract(contractID)
 
 	if err != nil {
 		t.Errorf("an error was unexpected while querying contract data %s", err)
 	}
 
 	t.Logf("contractor name: %s", contract.ContractorName)
+	t.Logf("quota cpu: %d", contract.Quota.Cpu)
+}
+
+func getRandomString(prefix string) string {
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+	return fmt.Sprintf("%s-%d", prefix, r.Int31n(1000000000))
 }

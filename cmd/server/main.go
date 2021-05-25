@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"strconv"
 
@@ -10,13 +11,18 @@ import (
 	"github.com/sktelecom/tks-contract/pkg/log"
 	pb "github.com/sktelecom/tks-proto/pbgo"
 	"google.golang.org/grpc"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
 	port               int    = 9110
-	enableMockup       bool   = false
 	infoServiceAddress string = ""
 	infoServicePort    int    = 9111
+	dbhost             string = "localhost"
+	dbport             string = "5432"
+	dbuser             string = "postgres"
+	dbpassword         string = "password"
 )
 
 type server struct {
@@ -25,28 +31,32 @@ type server struct {
 
 func init() {
 	setFlags()
-
-	contractAccessor = contract.NewContractAccessor()
 }
 
 func setFlags() {
 	flag.IntVar(&port, "port", 9110, "service port")
-	flag.BoolVar(&enableMockup, "enable-mockup", false, "enable mockup contracts")
 	flag.StringVar(&infoServiceAddress, "info-address", "", "service address for tks-info")
 	flag.IntVar(&infoServicePort, "info-port", 9111, "service port for tks-info")
+	flag.StringVar(&dbhost, "dbhost", "localhost", "host of postgreSQL")
+	flag.StringVar(&dbport, "dbport", "5432", "port of postgreSQL")
+	flag.StringVar(&dbuser, "dbuser", "postgres", "postgreSQL user")
+	flag.StringVar(&dbpassword, "dbpassword", "password", "password for postgreSQL user")
 }
 
 func main() {
 	flag.Parse()
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=tks port=%s sslmode=disable TimeZone=Asia/Seoul",
+		dbhost, dbuser, dbpassword, dbport)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("an error occurred ", err)
+	}
+	contractAccessor = contract.New(db)
+
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
 	log.Info("Starting to listen port ", port)
 	if err != nil {
 		log.Fatal("failed to listen:", err)
-	}
-	if enableMockup {
-		if err := InsertMockupContracts(contractAccessor); err != nil {
-			log.Warn("failed to create mockup data:", err)
-		}
 	}
 	cc, sc, err := gcInfo.CreateClientsObject(infoServiceAddress, infoServicePort, false, "")
 	infoClient = gcInfo.New(cc, sc)
