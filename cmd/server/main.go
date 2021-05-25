@@ -48,8 +48,8 @@ func main() {
 			log.Warn("failed to create mockup data:", err)
 		}
 	}
-
-	infoClient, err = gcInfo.NewInfoClient(infoServiceAddress, infoServicePort, false, "")
+	cc, sc, err := gcInfo.CreateClientsObject(infoServiceAddress, infoServicePort, false, "")
+	infoClient = gcInfo.New(cc, sc)
 	if err != nil {
 		log.Error()
 	}
