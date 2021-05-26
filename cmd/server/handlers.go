@@ -197,12 +197,27 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 	}, nil
 }
 
-// GetServices implements pbgo.ContractService.GetServices gRPC
-func (s *server) GetServices(ctx context.Context, in *pb.GetServicesRequest) (*pb.GetServicesResponse, error) {
-	log.Warn("Not implemented: GetServices")
-	res := pb.GetServicesResponse{
-		Code:  pb.Code_UNIMPLEMENTED,
-		Error: nil,
+// GetAvailableServices implements pbgo.ContractService.GetAvailableServices gRPC
+func (s *server) GetAvailableServices(ctx context.Context, in *pb.GetAvailableServicesRequest) (*pb.GetAvailableServicesResponse, error) {
+	log.Info("Request 'GetAvailableServices' for contract id ", in.GetContractId())
+	contractID, err := uuid.Parse(in.GetContractId())
+	if err != nil {
+		return &pb.GetAvailableServicesResponse{
+			Code: pb.Code_INVALID_ARGUMENT,
+			Error: &pb.Error{
+				Msg: fmt.Sprintf("invalid contract ID %s", in.GetContractId()),
+			},
+		}, err
+	}
+
+	contract, err := contractAccessor.GetContract(contractID)
+	if err != nil {
+		return nil, fmt.Errorf("not exist contract for contract id %s", contractID)
+	}
+	res := pb.GetAvailableServicesResponse{
+		Code:                pb.Code_OK_UNSPECIFIED,
+		Error:               nil,
+		AvaiableServiceApps: contract.AvailableServices,
 	}
 	return &res, nil
 }

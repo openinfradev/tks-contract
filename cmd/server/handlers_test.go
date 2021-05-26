@@ -42,6 +42,8 @@ func TestCreateContract(t *testing.T) {
 	defer cancel()
 
 	contractorName := getRandomString("handler")
+	t.Logf("New ContractorName %s", contractorName)
+
 	req := pb.CreateContractRequest{
 		ContractorName: contractorName,
 		CspName:        "aws",
@@ -191,6 +193,28 @@ func TestGetQuota(t *testing.T) {
 			Fs:       12800000,
 			FsSsd:    0,
 		},
+	}
+	if !reflect.DeepEqual(expected, res) {
+		t.Errorf("%v != %v", expected, res)
+	}
+}
+
+func TestGetAvailableServices(t *testing.T) {
+	s := server{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	req := pb.GetAvailableServicesRequest{
+		ContractId: contractID,
+	}
+	res, err := s.GetAvailableServices(ctx, &req)
+	if err != nil {
+		t.Error("error occurred " + err.Error())
+	}
+
+	expected := &pb.GetAvailableServicesResponse{
+		Code:                pb.Code_OK_UNSPECIFIED,
+		Error:               nil,
+		AvaiableServiceApps: []string{"lma", "servicemesh"},
 	}
 	if !reflect.DeepEqual(expected, res) {
 		t.Errorf("%v != %v", expected, res)
