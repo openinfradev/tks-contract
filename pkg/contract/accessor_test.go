@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/sktelecom/tks-contract/pkg/contract"
+	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
 var contractID uuid.UUID
@@ -28,14 +29,14 @@ func TestCreateContract(t *testing.T) {
 	if err != nil {
 		t.Errorf("an error was unexpected while initilizing database %s", err)
 	}
-	quota := contract.ResourceQuotaParam{
+	quota := pb.ContractQuota{
 		Cpu:    256,
 		Memory: 12800000,
 		Block:  12800000,
 		Fs:     12800000,
 	}
 	contractName := getRandomString("gotest")
-	contractID, err = accessor.Create(contractName, []string{"lma"}, quota)
+	contractID, err = accessor.Create(contractName, []string{"lma"}, &quota)
 	if err != nil {
 		t.Errorf("an error was unexpected while creating new contract: %s", err)
 	}
@@ -58,11 +59,11 @@ func TestUpdateResourceQuota(t *testing.T) {
 	if err != nil {
 		t.Errorf("an error was unexpected while initilizing database %s", err)
 	}
-	quota := contract.ResourceQuotaParam{
+	quota := pb.ContractQuota{
 		Cpu:    128,
 		Memory: 1280000,
 	}
-	_, _, err = accessor.UpdateResourceQuota(contractID, quota)
+	_, _, err = accessor.UpdateResourceQuota(contractID, &quota)
 
 	if err != nil {
 		t.Errorf("an error was unexpected while querying contract data %s", err)

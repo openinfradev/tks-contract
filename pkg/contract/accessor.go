@@ -73,7 +73,7 @@ func (x *Accessor) List(offset, limit int) ([]pb.Contract, error) {
 }
 
 // Create creates a new contract in database.
-func (x *Accessor) Create(name string, availableServices []string, quota ResourceQuotaParam) (uuid.UUID, error) {
+func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota) (uuid.UUID, error) {
 	pqStrArr := pq.StringArray{}
 
 	for _, svc := range availableServices {
@@ -102,7 +102,7 @@ func (x *Accessor) Create(name string, availableServices []string, quota Resourc
 }
 
 // UpdateResourceQuota updates resource quota.
-func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota ResourceQuotaParam) (
+func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota *pb.ContractQuota) (
 	p *pb.ContractQuota, c *pb.ContractQuota, err error) {
 	prev, err := x.GetResourceQuota(contractID)
 	if err != nil {

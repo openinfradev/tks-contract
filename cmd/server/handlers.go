@@ -19,17 +19,8 @@ var (
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Info("Request 'CreateContract' for contract name", in.GetContractorName())
-	inputQuota := in.GetQuota()
 	contractID, err := contractAccessor.Create(in.GetContractorName(),
-		in.GetAvailableServices(),
-		contract.ResourceQuotaParam{
-			Cpu:      inputQuota.Cpu,
-			Memory:   inputQuota.Memory,
-			Block:    inputQuota.Block,
-			BlockSsd: inputQuota.BlockSsd,
-			Fs:       inputQuota.Fs,
-			FsSsd:    inputQuota.FsSsd,
-		})
+		in.GetAvailableServices(), in.GetQuota())
 	if err != nil {
 		res := pb.CreateContractResponse{
 			Code: pb.Code_NOT_FOUND,
@@ -72,15 +63,7 @@ func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*p
 		}
 		return &res, err
 	}
-	inputQuota := in.GetQuota()
-	prev, curr, err := contractAccessor.UpdateResourceQuota(contractID, contract.ResourceQuotaParam{
-		Cpu:      inputQuota.Cpu,
-		Memory:   inputQuota.Memory,
-		Block:    inputQuota.Block,
-		BlockSsd: inputQuota.BlockSsd,
-		Fs:       inputQuota.Fs,
-		FsSsd:    inputQuota.FsSsd,
-	})
+	prev, curr, err := contractAccessor.UpdateResourceQuota(contractID, in.GetQuota())
 
 	if err != nil {
 		res := pb.UpdateQuotaResponse{
