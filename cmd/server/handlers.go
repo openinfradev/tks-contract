@@ -162,7 +162,7 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 		return &pb.GetQuotaResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
 			Error: &pb.Error{
-				Msg: fmt.Sprintf("invalid contract ID %s", in.GetContractId()),
+				Msg: err.Error(),
 			},
 		}, err
 	}
