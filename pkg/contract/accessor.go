@@ -161,7 +161,7 @@ func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []str
 		contract model.Contract
 	)
 	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
-		return nil, nil, fmt.Errorf("not exist contract for contract id %s", id)
+		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
 	}
 	prev = contract.AvailableServices
 	if res := x.db.Model(&model.Contract{}).Where("id = ?", id).Update("available_services", pqStrArr); res.RowsAffected == 0 || res.Error != nil {
@@ -169,7 +169,7 @@ func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []str
 	}
 
 	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
-		return nil, nil, fmt.Errorf("not exist contract for contract id %s", id)
+		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
 	}
 	curr = contract.AvailableServices
 	return prev, curr, nil

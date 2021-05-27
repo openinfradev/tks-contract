@@ -195,7 +195,7 @@ func (s *server) GetAvailableServices(ctx context.Context, in *pb.GetAvailableSe
 
 	contract, err := contractAccessor.GetContract(contractID)
 	if err != nil {
-		return nil, fmt.Errorf("not exist contract for contract id %s", contractID)
+		return nil, fmt.Errorf("could not find contract for contract id %s", contractID)
 	}
 	res := pb.GetAvailableServicesResponse{
 		Code:                pb.Code_OK_UNSPECIFIED,
