@@ -80,13 +80,9 @@ func (x *Accessor) Create(name string, availableServices []string, quota *pb.Con
 		pqStrArr = append(pqStrArr, svc)
 	}
 
-	var contract model.Contract
+	contract := model.Contract{ContractorName: name, AvailableServices: pqStrArr}
 	err := x.db.Transaction(func(tx *gorm.DB) error {
-		res := tx.Create(&model.Contract{ContractorName: name, AvailableServices: pqStrArr})
-		if res.Error != nil {
-			return res.Error
-		}
-		res = tx.First(&contract, "contractor_name = ?", name)
+		res := tx.Create(&contract)
 		if res.Error != nil {
 			return res.Error
 		}
