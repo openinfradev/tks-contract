@@ -2,63 +2,193 @@ package contract
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/lib/pq"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	uuid "github.com/google/uuid"
+	model "github.com/sktelecom/tks-contract/pkg/contract/model"
 	pb "github.com/sktelecom/tks-proto/pbgo"
+	"gorm.io/gorm"
 )
 
 // Accessor is an accessor to in-memory contracts.
 type Accessor struct {
-	contracts map[ID]Contract
+	db *gorm.DB
 }
 
-// NewContractAccessor returns new contract accessor's ptr.
-func NewContractAccessor() *Accessor {
+// New returns new accessor's ptr.
+func New(db *gorm.DB) *Accessor {
 	return &Accessor{
-		contracts: map[ID]Contract{},
+		db: db,
 	}
 }
 
-// Get returns contract data from in-memory map.
-func (c Accessor) Get(id ID) (*Contract, error) {
-	contract, exists := c.contracts[id]
-	if !exists {
-		return &Contract{}, fmt.Errorf("Not found contract for %s", id)
+// GetContract returns a contract from database.
+func (x *Accessor) GetContract(id uuid.UUID) (*pb.Contract, error) {
+	var contract model.Contract
+	res := x.db.First(&contract, id)
+	if res.RowsAffected == 0 || res.Error != nil {
+		return &pb.Contract{}, fmt.Errorf("Not found contract for %s", id)
 	}
-
-	return &contract, nil
+	quota, err := x.GetResourceQuota(contract.ID)
+	if err != nil {
+		return &pb.Contract{}, err
+	}
+	resContract := reflectToPbContract(contract, &quota)
+	return &resContract, nil
 }
 
-// Post inserts new contract in in-memory map if contractId does not exist.
-func (c *Accessor) Post(contractorName string, id ID, cspID ID,
-	availableServices []string, quota *pb.ContractQuota) error {
-	if _, exists := c.contracts[id]; exists {
-		return fmt.Errorf("Already exists contractId %s", id)
+// getContract returns a resource quota from database.
+func (x *Accessor) GetResourceQuota(contractID uuid.UUID) (pb.ContractQuota, error) {
+	var quota model.ResourceQuota
+	res := x.db.First(&quota, "contract_id = ?", contractID)
+	if res.RowsAffected == 0 || res.Error != nil {
+		return pb.ContractQuota{}, fmt.Errorf("Not found quota for contract id %s", contractID)
 	}
-	c.contracts[id] = Contract{
-		ContractorName:    contractorName,
-		ID:                id,
-		AvailableServices: availableServices,
+
+	return reflectToPbQuota(quota), nil
+}
+
+// List returns a list of contracts from database.
+func (x *Accessor) List(offset, limit int) ([]pb.Contract, error) {
+	var (
+		contracts       []model.Contract
+		quota           model.ResourceQuota
+		resultContracts []pb.Contract
+	)
+	res := x.db.Offset(offset).Limit(limit).Find(&contracts)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	for _, contract := range contracts {
+		res = x.db.First(&quota, "contract_id = ?", contract.ID)
+		if res.RowsAffected == 0 || res.Error != nil {
+			return nil, fmt.Errorf("Not found quota for contract id %s", contract.ID)
+		}
+		pbQuota := reflectToPbQuota(quota)
+		resultContracts = append(resultContracts, reflectToPbContract(contract, &pbQuota))
+	}
+	return resultContracts, nil
+}
+
+// Create creates a new contract in database.
+func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota) (uuid.UUID, error) {
+	pqStrArr := pq.StringArray{}
+
+	for _, svc := range availableServices {
+		pqStrArr = append(pqStrArr, svc)
+	}
+
+	contract := model.Contract{ContractorName: name, AvailableServices: pqStrArr}
+	err := x.db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Create(&contract)
+		if res.Error != nil {
+			return res.Error
+		}
+		res = tx.Create(&model.ResourceQuota{Cpu: quota.Cpu, Memory: quota.Memory,
+			Block: quota.Block, BlockSsd: quota.BlockSsd, Fs: quota.Fs, FsSsd: quota.FsSsd, ContractID: contract.ID})
+		if res.Error != nil {
+			return res.Error
+		}
+		return nil
+	})
+
+	return contract.ID, err
+}
+
+// UpdateResourceQuota updates resource quota.
+func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota *pb.ContractQuota) (
+	p *pb.ContractQuota, c *pb.ContractQuota, err error) {
+	prev, err := x.GetResourceQuota(contractID)
+	if err != nil {
+		return &pb.ContractQuota{}, &pb.ContractQuota{}, fmt.Errorf("not found resource quota for contract ID %s", contractID)
+	}
+
+	values := map[string]interface{}{
+		"cpu":       prev.Cpu,
+		"memory":    prev.Memory,
+		"block":     prev.Block,
+		"block_ssd": prev.BlockSsd,
+		"fs":        prev.Fs,
+		"fs_ssd":    prev.FsSsd,
+	}
+
+	if quota.Cpu != 0 {
+		values["cpu"] = quota.Cpu
+	}
+	if quota.Memory != 0 {
+		values["memory"] = quota.Memory
+	}
+	if quota.Block != 0 {
+		values["block"] = quota.Block
+	}
+	if quota.Block != 0 {
+		values["block_ssd"] = quota.BlockSsd
+	}
+	if quota.Fs != 0 {
+		values["fs"] = quota.Fs
+	}
+	if quota.FsSsd != 0 {
+		values["fs_ssd"] = quota.FsSsd
+	}
+
+	res := x.db.Model(&model.ResourceQuota{}).
+		Where("contract_id = ?", contractID).
+		Updates(values)
+
+	if res.Error != nil || res.RowsAffected == 0 {
+		return nil, nil, fmt.Errorf("nothing updated in resource_quota for contract id %s", contractID)
+	}
+
+	curr, err := x.GetResourceQuota(contractID)
+	return &prev, &curr, err
+}
+
+// UpdateAvailableServices updates available service list and resource quota.
+func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []string) (
+	prev []string, curr []string, err error) {
+	pqStrArr := pq.StringArray{}
+
+	for _, svc := range availableServices {
+		pqStrArr = append(pqStrArr, svc)
+	}
+	var (
+		contract model.Contract
+	)
+	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
+		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
+	}
+	prev = contract.AvailableServices
+	if res := x.db.Model(&model.Contract{}).Where("id = ?", id).Update("available_services", pqStrArr); res.RowsAffected == 0 || res.Error != nil {
+		return prev, curr, fmt.Errorf("RowsAffected is 0 for contract id %s", id)
+	}
+
+	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
+		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
+	}
+	curr = contract.AvailableServices
+	return prev, curr, nil
+}
+
+func reflectToPbContract(contract model.Contract, quota *pb.ContractQuota) pb.Contract {
+	return pb.Contract{
+		ContractId:        contract.ID.String(),
+		ContractorName:    contract.ContractorName,
+		AvailableServices: contract.AvailableServices,
+		UpdatedAt:         timestamppb.New(contract.UpdatedAt),
+		CreatedAt:         timestamppb.New(contract.CreatedAt),
 		Quota:             quota,
-		LastUpdatedTs:     &LastUpdatedTime{time.Now()},
-		CspID:             cspID,
 	}
-	return nil
 }
 
-// Update updates contract data by contractID.
-// Not implemented yet.
-func (c *Accessor) Update(contractorName string, id ID,
-	availableServices []string, quota *pb.ContractQuota) error {
-	if _, exists := c.contracts[id]; !exists {
-		return fmt.Errorf("Not exists contractId %s", id)
+func reflectToPbQuota(quota model.ResourceQuota) pb.ContractQuota {
+	return pb.ContractQuota{
+		Cpu:      quota.Cpu,
+		Memory:   quota.Memory,
+		Block:    quota.Block,
+		BlockSsd: quota.BlockSsd,
+		Fs:       quota.Fs,
+		FsSsd:    quota.FsSsd,
 	}
-	c.contracts[id] = Contract{
-		ContractorName:    contractorName,
-		ID:                id,
-		AvailableServices: availableServices,
-		Quota:             quota,
-		LastUpdatedTs:     &LastUpdatedTime{time.Now()},
-	}
-	return nil
 }
