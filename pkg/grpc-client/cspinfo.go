@@ -11,19 +11,19 @@ import (
 	pb "github.com/sktelecom/tks-proto/pbgo"
 )
 
-type InfoClient struct {
+type CspInfoServiceClient struct {
 	cc *grpc.ClientConn
-	sc pb.InfoServiceClient
+	sc pb.CspInfoServiceClient
 }
 
-func New(cc *grpc.ClientConn, sc pb.InfoServiceClient) *InfoClient {
-	return &InfoClient{
+func NewCspInfoServiceClient(cc *grpc.ClientConn, sc pb.CspInfoServiceClient) *CspInfoServiceClient {
+	return &CspInfoServiceClient{
 		cc: cc,
 		sc: sc,
 	}
 }
 
-func CreateClientsObject(address string, port int, tls bool, caFile string) (*grpc.ClientConn, pb.InfoServiceClient, error) {
+func CreateClientsObject(address string, port int, tls bool, caFile string) (*grpc.ClientConn, pb.CspInfoServiceClient, error) {
 	opts := grpc.WithInsecure()
 	if tls {
 		if caFile == "" {
@@ -44,11 +44,11 @@ func CreateClientsObject(address string, port int, tls bool, caFile string) (*gr
 		log.Fatal("Could not connect to gRPC server", err)
 		return nil, nil, err
 	}
-	sc := pb.NewInfoServiceClient(cc)
+	sc := pb.NewCspInfoServiceClient(cc)
 	return cc, sc, nil
 }
 
-func (c *InfoClient) CreateCSPInfo(ctx context.Context, contractId string,
+func (c *CspInfoServiceClient) CreateCSPInfo(ctx context.Context, contractId string,
 	cspName string, auth string) (*pb.IDResponse, error) {
 	return c.sc.CreateCSPInfo(ctx, &pb.CreateCSPInfoRequest{
 		ContractId: contractId,
@@ -57,6 +57,6 @@ func (c *InfoClient) CreateCSPInfo(ctx context.Context, contractId string,
 	})
 }
 
-func (c *InfoClient) Close() error {
+func (c *CspInfoServiceClient) Close() error {
 	return c.cc.Close()
 }
