@@ -13,7 +13,7 @@ import (
 
 var (
 	contractAccessor *contract.Accessor
-	infoClient       *gc.InfoClient
+	cspInfoClient    *gc.CspInfoServiceClient
 )
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
@@ -31,7 +31,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		return &res, err
 	}
 	// Create New CSP Info
-	res, err := infoClient.CreateCSPInfo(ctx, contractID.String(), in.GetCspName(), in.GetCspAuth())
+	res, err := cspInfoClient.CreateCSPInfo(ctx, contractID.String(), in.GetCspName(), in.GetCspAuth())
 	log.Info("newly created CSP ID:", res.GetId())
 	if err != nil || res.GetCode() != pb.Code_OK_UNSPECIFIED {
 		res := pb.CreateContractResponse{

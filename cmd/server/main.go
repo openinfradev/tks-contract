@@ -59,11 +59,11 @@ func main() {
 		log.Fatal("failed to listen:", err)
 	}
 	cc, sc, err := gcInfo.CreateClientsObject(infoServiceAddress, infoServicePort, false, "")
-	infoClient = gcInfo.New(cc, sc)
+	cspInfoClient = gcInfo.NewCspInfoServiceClient(cc, sc)
 	if err != nil {
 		log.Error()
 	}
-	defer infoClient.Close()
+	defer cspInfoClient.Close()
 
 	s := grpc.NewServer()
 	pb.RegisterContractServiceServer(s, &server{})

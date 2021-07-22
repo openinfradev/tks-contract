@@ -33,8 +33,8 @@ func TestCreateContract(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	ctx, cancel := context.WithCancel(context.Background())
-	mockInfoClient := mock.NewMockInfoServiceClient(ctrl)
-	infoClient = gc.New(nil, mockInfoClient)
+	mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
+	cspInfoClient = gc.NewCspInfoServiceClient(nil, mockInfoClient)
 	contractAccessor, err = getAccessor()
 	if err != nil {
 		t.Errorf("unexpected error %s", err)
