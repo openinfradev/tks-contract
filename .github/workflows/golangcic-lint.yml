@@ -14,8 +14,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Configure git for private modules
         run: |
-          git config --global url."https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/openinfradev".insteadOf "https://github.com/openinfradev"
-          go clean -modcache
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/openinfradev".insteadOf "https://github.com/openinfradev"
+          export GOPRIVATE="github.com/openinfradev"
+          echo ${GITHUB_TOKEN} 
+          echo ${{ secrets.GITHUB_TOKEN }} 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
