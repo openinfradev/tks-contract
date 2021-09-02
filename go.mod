@@ -1,4 +1,4 @@
-module github.com/sktelecom/tks-contract
+module github.com/openinfradev/tks-contract
 
 go 1.16
 
@@ -8,17 +8,17 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/jackc/pgproto3/v2 v2.0.7 // indirect
 	github.com/lib/pq v1.10.2
+	github.com/openinfradev/tks-proto v0.0.6-0.20210901093202-5e0db3fa3d4f
 	github.com/sirupsen/logrus v1.8.1
-	github.com/sktelecom/tks-proto v0.0.6-0.20210622012523-ded9f951101f
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
 	google.golang.org/genproto v0.0.0-20210524171403-669157292da3 // indirect
 	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/protobuf v1.27.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10
 )
 
-replace github.com/sktelecom/tks-contract => ./
+replace github.com/openinfradev/tks-contract => ./

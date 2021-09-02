@@ -10,8 +10,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/sktelecom/tks-contract/pkg/contract"
-	pb "github.com/sktelecom/tks-proto/pbgo"
+	"github.com/openinfradev/tks-contract/pkg/contract"
+	pb "github.com/openinfradev/tks-proto/pbgo"
 )
 
 var contractID uuid.UUID
