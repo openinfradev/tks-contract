@@ -16,7 +16,8 @@ jobs:
         env:
           TOKEN: ${{ secrets.GITHUB_ACCOUNT_TOKEN }}
         run: |
-          git config --global url."https://x-access-token:${{ TOKEN }}@github.com/openinfradev".insteadOf "https://github.com/openinfradev"
+          git config --global url."https://x-access-token:${ TOKEN }@github.com/openinfradev".insteadOf "https://github.com/openinfradev"
+          echo ${ TOKEN }
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
