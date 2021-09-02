@@ -14,5 +14,5 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         registry: docker.pkg.github.com
-        repository: ${{ github.repository }}/tks-contract
+        repository: sktelecom/tks-contract
         tag_with_ref: true
