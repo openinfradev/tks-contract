@@ -7,8 +7,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	uuid "github.com/google/uuid"
-	model "github.com/sktelecom/tks-contract/pkg/contract/model"
-	pb "github.com/sktelecom/tks-proto/pbgo"
+	model "github.com/openinfradev/tks-contract/pkg/contract/model"
+	pb "github.com/openinfradev/tks-proto/pbgo"
 	"gorm.io/gorm"
 )
 

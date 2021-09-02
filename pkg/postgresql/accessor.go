@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/sktelecom/tks-contract/pkg/log"
+	"github.com/openinfradev/tks-contract/pkg/log"
 
 	_ "github.com/lib/pq"
 )

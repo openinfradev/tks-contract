@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/sktelecom/tks-contract/pkg/contract"
-	gc "github.com/sktelecom/tks-contract/pkg/grpc-client"
-	"github.com/sktelecom/tks-contract/pkg/log"
-	pb "github.com/sktelecom/tks-proto/pbgo"
+	"github.com/openinfradev/tks-contract/pkg/contract"
+	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
+	"github.com/openinfradev/tks-contract/pkg/log"
+	pb "github.com/openinfradev/tks-proto/pbgo"
 )
 
 var (

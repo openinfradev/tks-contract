@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/sktelecom/tks-contract/pkg/contract"
-	gc "github.com/sktelecom/tks-contract/pkg/grpc-client"
-	pb "github.com/sktelecom/tks-proto/pbgo"
-	mock "github.com/sktelecom/tks-proto/pbgo/mock"
+	"github.com/openinfradev/tks-contract/pkg/contract"
+	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
+	pb "github.com/openinfradev/tks-proto/pbgo"
+	mock "github.com/openinfradev/tks-proto/pbgo/mock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/sktelecom/tks-contract/pkg/postgresql"
+	"github.com/openinfradev/tks-contract/pkg/postgresql"
 )
 
 func TestInsert(t *testing.T) {
