@@ -50,7 +50,7 @@ func Debug(v ...interface{}) {
 
 // Error logs in ErrorLevel.
 func Error(v ...interface{}) {
-	logger.Debug(v...)
+	logger.Error(v...)
 }
 
 // Fatal logs in FatalLevel
