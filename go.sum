@@ -328,6 +328,8 @@ github.com/openinfradev/tks-proto v0.0.6-0.20210622012523-ded9f951101f h1:G0rsoW
 github.com/openinfradev/tks-proto v0.0.6-0.20210622012523-ded9f951101f/go.mod h1:nviaEDJn6wwQPiPogs2EBw3L/6HTkyyXIRkwyjH0pgY=
 github.com/openinfradev/tks-proto v0.0.6-0.20210901093202-5e0db3fa3d4f h1:iNmfzxaqaHQz1rIx5fcpwraDJmfXOhghV5sHs/czqgU=
 github.com/openinfradev/tks-proto v0.0.6-0.20210901093202-5e0db3fa3d4f/go.mod h1:CNWRzw2ZOmQmHj2THPqE1ujWWRDaIbIwwhvu14bRVUI=
+github.com/openinfradev/tks-proto v0.0.6-0.20210924020717-178698d59e9d h1:zF3HWbi07yQ+mgWONzhIS7Aa+fKeAQdOwS7lh4KtmmA=
+github.com/openinfradev/tks-proto v0.0.6-0.20210924020717-178698d59e9d/go.mod h1:WDzIQ7ayHVA7cA3Z+D2etK7gQuo4penewcC/cWcewlA=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
 github.com/opentracing/basictracer-go v1.0.0/go.mod h1:QfBfYuafItcjQuMwinw9GhYKwFXS9KnPs5lxoYwgW74=
 github.com/opentracing/opentracing-go v1.0.2/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=

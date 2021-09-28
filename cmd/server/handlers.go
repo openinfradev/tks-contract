@@ -8,7 +8,7 @@ import (
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
 	"github.com/openinfradev/tks-contract/pkg/log"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"github.com/openinfradev/tks-cluster-lcm/pkg/argowf"
 )
 

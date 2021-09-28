@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/openinfradev/tks-contract/pkg/contract"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/openinfradev/tks-proto/tks_pb"
 )
 
 var contractID uuid.UUID

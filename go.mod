@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
 	github.com/lib/pq v1.10.3
 	github.com/openinfradev/tks-cluster-lcm v0.0.0-20210908061731-769e64f93271
-	github.com/openinfradev/tks-proto v0.0.6-0.20210901093202-5e0db3fa3d4f
+	github.com/openinfradev/tks-proto v0.0.6-0.20210924020717-178698d59e9d
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272 // indirect
