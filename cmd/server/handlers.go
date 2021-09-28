@@ -9,18 +9,27 @@ import (
 	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
 	"github.com/openinfradev/tks-contract/pkg/log"
 	pb "github.com/openinfradev/tks-proto/pbgo"
+	"github.com/openinfradev/tks-cluster-lcm/pkg/argowf"
 )
 
 var (
+	argowfClient *argowf.Client
 	contractAccessor *contract.Accessor
 	cspInfoClient    *gc.CspInfoServiceClient
 )
 
+func InitHandlers( argoAddress string, argoPort int ) {
+	_client, err := argowf.New( argoAddress, argoPort, false, "" );
+	if err != nil {
+		log.Fatal( "failed to create argowf client : ", err )
+	}
+	argowfClient = _client;
+}
+
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Info("Request 'CreateContract' for contract name", in.GetContractorName())
-	contractID, err := contractAccessor.Create(in.GetContractorName(),
-		in.GetAvailableServices(), in.GetQuota())
+	contractId, err := contractAccessor.Create(in.GetContractorName(), in.GetAvailableServices(), in.GetQuota())
 	if err != nil {
 		res := pb.CreateContractResponse{
 			Code: pb.Code_NOT_FOUND,
@@ -30,9 +39,10 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		}
 		return &res, err
 	}
-	// Create New CSP Info
-	res, err := cspInfoClient.CreateCSPInfo(ctx, contractID.String(), in.GetCspName(), in.GetCspAuth())
-	log.Info("newly created CSP ID:", res.GetId())
+	log.Info("newly created Contract Id:", contractId)
+
+	res, err := cspInfoClient.CreateCSPInfo(ctx, contractId.String(), in.GetCspName(), in.GetCspAuth())
+	log.Info("newly created CSP Id:", res.GetId())
 	if err != nil || res.GetCode() != pb.Code_OK_UNSPECIFIED {
 		res := pb.CreateContractResponse{
 			Code: res.GetCode(),
@@ -42,11 +52,51 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		}
 		return &res, err
 	}
+
+	// check workflow
+	{
+		nameSpace := "argo"
+		if err := argowfClient.IsRunningWorkflowByContractId(nameSpace, contractId.String()); err != nil {
+			log.Error(fmt.Sprintf("Already running workflow. contractId : %s", contractId.String()))
+			return &pb.CreateContractResponse{
+				Code: pb.Code_OK_UNSPECIFIED,
+				Error: &pb.Error{
+					Msg: fmt.Sprintf("Already running workflow. contractId : %s", contractId.String() ),
+				},
+			}, nil
+		}
+	}
+
+	// call workflow
+	{
+		workflow := "tks-create-contract-repo"
+		nameSpace := "argo"
+
+		opts := argowf.SubmitOptions{}
+		opts.Parameters = []string{ 
+			"contract_id=" + contractId.String(), 
+		};
+
+		res, err := argowfClient.SumbitWorkflowFromWftpl( workflow, nameSpace, opts );
+		if err != nil {
+			log.Error( "failed to submit argo workflow %s template. err : %s", workflow, err )
+			return &pb.CreateContractResponse {
+				Code: pb.Code_INTERNAL,
+				Error: &pb.Error{
+					Msg: fmt.Sprintf("Failed to call argo workflow : %s", err ),
+				},
+			}, nil
+		}
+		log.Debug("submited workflow template :", res)
+	}
+
+	// [TODO] Contract status 관리?
+
 	return &pb.CreateContractResponse{
 		Code:       pb.Code_OK_UNSPECIFIED,
 		Error:      nil,
 		CspId:      res.GetId(),
-		ContractId: contractID.String(),
+		ContractId: contractId.String(),
 	}, nil
 }
 
