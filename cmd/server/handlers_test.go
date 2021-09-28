@@ -11,8 +11,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
-	pb "github.com/openinfradev/tks-proto/pbgo"
-	mock "github.com/openinfradev/tks-proto/pbgo/mock"
+	pb "github.com/openinfradev/tks-proto/tks_pb"
+	mock "github.com/openinfradev/tks-proto/tks_pb/mock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

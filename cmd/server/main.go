@@ -9,7 +9,7 @@ import (
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	gcInfo "github.com/openinfradev/tks-contract/pkg/grpc-client"
 	"github.com/openinfradev/tks-contract/pkg/log"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
