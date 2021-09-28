@@ -57,7 +57,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	{
 		nameSpace := "argo"
 		if err := argowfClient.IsRunningWorkflowByContractId(nameSpace, contractId.String()); err != nil {
-			log.Error(fmt.Sprintf("Already running workflow. contractId : %s", contractId.String()))
+			log.Error(err)
 			return &pb.CreateContractResponse{
 				Code: pb.Code_OK_UNSPECIFIED,
 				Error: &pb.Error{
