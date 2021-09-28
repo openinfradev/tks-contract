@@ -8,7 +8,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
-	pb "github.com/openinfradev/tks-proto/pbgo"
+	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"gorm.io/gorm"
 )
 
