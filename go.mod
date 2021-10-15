@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/lib/pq v1.10.3
 	github.com/openinfradev/tks-cluster-lcm v0.0.0-20210908061731-769e64f93271
-	github.com/openinfradev/tks-proto v0.0.6-0.20210924020717-178698d59e9d
+	github.com/openinfradev/tks-proto v0.0.6-0.20211015003551-ed8f9541f40d
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
