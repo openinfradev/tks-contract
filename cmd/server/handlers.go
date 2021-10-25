@@ -53,29 +53,27 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		}, nil
 	}
 
-	{
-		workflowTemplate := "tks-create-contract-repo"
-		nameSpace := "argo"
-		parameters := []string{ 
-			"contract_id=" + contractId.String(), 
-		};
+	workflowTemplate := "tks-create-contract-repo"
+	nameSpace := "argo"
+	parameters := []string{ 
+		"contract_id=" + contractId.String(),  
+	};
 
-		workflowName, err := argowfClient.SumbitWorkflowFromWftpl( ctx, workflowTemplate, nameSpace, parameters );
-		if err != nil {
-			log.Error( "failed to submit argo workflow %s template. err : %s", workflowTemplate, err )
-			return &pb.CreateContractResponse {
-				Code: pb.Code_INTERNAL,
-				Error: &pb.Error{
-					Msg: fmt.Sprintf("Failed to call argo workflow : %s", err ),
-				},
-			}, nil
-		}
-		log.Info("submited workflow :", workflowName )
-
-		argowfClient.WaitWorkflows(ctx, nameSpace, []string{workflowName}, false, false)
-
-		log.Info("completed workflow :", workflowName )
+	workflowName, err := argowfClient.SumbitWorkflowFromWftpl( ctx, workflowTemplate, nameSpace, parameters );
+	if err != nil {
+		log.Error( "failed to submit argo workflow template. err : ", err )
+		return &pb.CreateContractResponse {
+			Code: pb.Code_INTERNAL,
+			Error: &pb.Error{
+				Msg: fmt.Sprintf("Failed to call argo workflow : %s", err ),
+			},
+		}, nil
 	}
+	log.Info("submited workflow :", workflowName )
+
+	argowfClient.WaitWorkflows(ctx, nameSpace, []string{workflowName}, false, false)
+
+	log.Info("completed workflow :", workflowName )
 
 	return &pb.CreateContractResponse{
 		Code:       pb.Code_OK_UNSPECIFIED,
