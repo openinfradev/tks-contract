@@ -71,9 +71,9 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	}
 	log.Info("submited workflow :", workflowName )
 
-	argowfClient.WaitWorkflows(ctx, nameSpace, []string{workflowName}, false, false)
+	//argowfClient.WaitWorkflows(ctx, nameSpace, []string{workflowName}, false, false)
 
-	log.Info("completed workflow :", workflowName )
+	//log.Info("completed workflow :", workflowName )
 
 	return &pb.CreateContractResponse{
 		Code:       pb.Code_OK_UNSPECIFIED,
