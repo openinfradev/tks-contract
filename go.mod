@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/lib/pq v1.10.3
-	github.com/openinfradev/tks-cluster-lcm v0.0.0-20210908061731-769e64f93271
+	github.com/openinfradev/tks-cluster-lcm v0.0.0-20211102040100-00b4e15d3e4c
 	github.com/openinfradev/tks-proto v0.0.6-0.20211015003551-ed8f9541f40d
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/grpc v1.41.0
@@ -20,4 +20,4 @@ require (
 replace github.com/openinfradev/tks-contract => ./
 
 //replace github.com/openinfradev/tks-proto => ../tks-proto
-replace github.com/openinfradev/tks-cluster-lcm => ./tks-cluster-lcm
+//replace github.com/openinfradev/tks-cluster-lcm => ./tks-cluster-lcm

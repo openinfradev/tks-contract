@@ -835,6 +835,8 @@ github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1y
 github.com/onsi/gomega v1.10.2 h1:aY/nuoWlKJud2J6U0E3NWsjlg+0GtwXxgEqthRdzlcs=
 github.com/onsi/gomega v1.10.2/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1ybHNo=
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7/go.mod h1:HzydrMdWErDVzsI23lYNej1Htcns9BCg93Dk0bBINWk=
+github.com/openinfradev/tks-cluster-lcm v0.0.0-20211102040100-00b4e15d3e4c h1:T1+rN5eS/weInJyvLhboXTBe6ODEesDUjNYu7gqffR8=
+github.com/openinfradev/tks-cluster-lcm v0.0.0-20211102040100-00b4e15d3e4c/go.mod h1:UPbYZgl7ayHtno8YwQzjZO+/SiGMxtQ8fBVGOSNpLeo=
 github.com/openinfradev/tks-info v0.0.0-20211015083247-48bc6cf48425/go.mod h1:srZDqw7GVKf90TPoO797aE0cyUVrIS4la/Gue7YY1Xc=
 github.com/openinfradev/tks-proto v0.0.6-0.20211015003551-ed8f9541f40d h1:ypM1LN+7tjRGzmTBNVegY/25KhJLFuQor2/+DfuhxDM=
 github.com/openinfradev/tks-proto v0.0.6-0.20211015003551-ed8f9541f40d/go.mod h1:ul6kvgOXhNQvXEUmb92Wh5BmsuzknnTCb3wqmVNd/iI=
