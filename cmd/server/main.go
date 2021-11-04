@@ -19,6 +19,8 @@ var (
 	port               int    = 9110
 	infoServiceAddress string = ""
 	infoServicePort    int    = 9111
+	argoAddress        string = ""
+	argoPort           int    = 2746
 	dbhost             string = "localhost"
 	dbport             string = "5432"
 	dbuser             string = "postgres"
@@ -37,6 +39,8 @@ func setFlags() {
 	flag.IntVar(&port, "port", 9110, "service port")
 	flag.StringVar(&infoServiceAddress, "info-address", "", "service address for tks-info")
 	flag.IntVar(&infoServicePort, "info-port", 9111, "service port for tks-info")
+	flag.StringVar(&argoAddress, "argo-address", "", "service address for argo-workflow")
+	flag.IntVar(&argoPort, "argo-port", 2746, "service port for argo-workflow")
 	flag.StringVar(&dbhost, "dbhost", "localhost", "host of postgreSQL")
 	flag.StringVar(&dbport, "dbport", "5432", "port of postgreSQL")
 	flag.StringVar(&dbuser, "dbuser", "postgres", "postgreSQL user")
@@ -66,6 +70,12 @@ func main() {
 	defer cspInfoClient.Close()
 
 	s := grpc.NewServer()
+
+	log.Info("Started to listen port ", port)
+	log.Info("****************************")
+
+	InitHandlers( argoAddress, argoPort )
+
 	pb.RegisterContractServiceServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatal("failed to serve:", err)
