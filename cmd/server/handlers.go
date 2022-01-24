@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	argowfClient *argowf.Client
+	argowfClient argowf.Client
 
 	contractAccessor *contract.Accessor
 	cspInfoClient    *gc.CspInfoServiceClient
@@ -31,7 +31,9 @@ func InitHandlers( argoAddress string, argoPort int ) {
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Info("Request 'CreateContract' for contract name", in.GetContractorName())
 
+	log.Info(contractAccessor)
 	contractId, err := contractAccessor.Create(in.GetContractorName(), in.GetAvailableServices(), in.GetQuota())
+	log.Info(err)
 	if err != nil {
 		return &pb.CreateContractResponse{
 			Code: pb.Code_NOT_FOUND,
@@ -44,11 +46,20 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 	res, err := cspInfoClient.CreateCSPInfo(ctx, contractId.String(), in.GetCspName(), in.GetCspAuth())
 	log.Info("newly created CSP Id:", res.GetId())
-	if err != nil || res.GetCode() != pb.Code_OK_UNSPECIFIED {
+	if err != nil {
 		return &pb.CreateContractResponse{
 			Code: res.GetCode(),
 			Error: &pb.Error{
 				Msg: err.Error(),
+			}, 
+		}, nil
+	}
+
+	if res.GetCode() != pb.Code_OK_UNSPECIFIED {
+		return &pb.CreateContractResponse{
+			Code: res.GetCode(),
+			Error: &pb.Error{
+				Msg: res.GetError().String(),
 			}, 
 		}, nil
 	}

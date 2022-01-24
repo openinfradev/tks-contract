@@ -2,226 +2,256 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
-	"reflect"
 	"testing"
+	"math/rand"
 	"time"
+	"fmt"
+	"errors"
 
+	"github.com/google/uuid"
 	"github.com/golang/mock/gomock"
-	"github.com/openinfradev/tks-contract/pkg/contract"
+	"github.com/stretchr/testify/require"
+
+	accessor "github.com/openinfradev/tks-contract/pkg/contract"
+	contract "github.com/openinfradev/tks-contract/pkg/contract/model"
 	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	mock "github.com/openinfradev/tks-proto/tks_pb/mock"
+	mockargo "github.com/openinfradev/tks-cluster-lcm/pkg/argowf/mock"
+
+	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"database/sql"
+
 )
 
-var contractID string
-
-func getAccessor() (*contract.Accessor, error) {
-	dsn := "host=localhost user=postgres password=password dbname=tks port=5432 sslmode=disable TimeZone=Asia/Seoul"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-	return contract.New(db), nil
+type dbConn struct {
+	db      *gorm.DB
+	mock    sqlmock.Sqlmock
 }
+
+func getAccessor() (*accessor.Accessor, sqlmock.Sqlmock, error) {
+	s := &dbConn{}
+	var (
+		db  *sql.DB
+		err error
+	)
+
+	db, s.mock, err = sqlmock.New()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+	s.db, err = gorm.Open(dialector, &gorm.Config{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return accessor.New(s.db), s.mock, nil
+}
+
 func TestCreateContract(t *testing.T) {
-	var err error
-	s := server{}
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	ctx, cancel := context.WithCancel(context.Background())
-	mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
-	cspInfoClient = gc.NewCspInfoServiceClient(nil, mockInfoClient)
-	contractAccessor, err = getAccessor()
-	if err != nil {
-		t.Errorf("unexpected error %s", err)
-	}
-	defer cancel()
+	contract := randomContract();
+	resourceQuota := randomResourceQuota(contract.ID);
+	req := reflectToRequest(contract, resourceQuota)
 
-	contractorName := getRandomString("handler")
-	t.Logf("New ContractorName %s", contractorName)
+	testCases := []struct {
+		name			string
+		in				pb.CreateContractRequest
+		buildStubs		func( mockSql sqlmock.Sqlmock, mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient )
+		checkResponse	func(res *pb.CreateContractResponse)
+	}{
+		{
+			//("contractor_name","available_services","updated_at","created_at","id"
+			name: "OK",
+			in: req,
+			buildStubs: func( mockSql sqlmock.Sqlmock, mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient ) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectQuery(`INSERT INTO "contracts" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+				mockSql.ExpectQuery(`INSERT INTO "resource_quota" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+				mockSql.ExpectCommit()
 
-	req := pb.CreateContractRequest{
-		ContractorName: contractorName,
-		CspName:        "aws",
-		CspAuth:        "{'token':'abcdefghijklmnop'}",
-		Quota: &pb.ContractQuota{
-			Cpu:    20,
-			Memory: 40,
-			Block:  12800000,
-			Fs:     12800000,
+				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).Return(&pb.IDResponse{
+					Code:  pb.Code_OK_UNSPECIFIED,
+					Error: nil,
+					Id:    uuid.New().String(),
+				}, nil)
+
+				mockArgoClient.EXPECT().
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any() ).
+					Times(1).
+					Return(randomString("workflowName"), nil)
+			},
+			checkResponse: func(res *pb.CreateContractResponse){
+				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
+			},
 		},
+		{
+			// [TODO] NOT_FOUND 가 아니라, DB_ERROR 로 변경해야 할 듯함.
+			name: "DB_ERROR_INTERNAL",
+			in: req,
+			buildStubs: func( mockSql sqlmock.Sqlmock, mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient ) {
+				mockSql.ExpectBegin()
+				mockSql.ExpectQuery(`INSERT INTO "contracts" (.+) RETURNING`).
+					WillReturnError(fmt.Errorf("some error"))
+				mockSql.ExpectQuery(`INSERT INTO "resource_quota" (.+) RETURNING`).
+					WillReturnError(fmt.Errorf("some error"))
+				mockSql.ExpectRollback()
+			},
+			checkResponse: func(res *pb.CreateContractResponse){
+				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
+			},
+		},
+		{
+			name: "CSP_INVALID_ARGUMENT",
+			in: req,
+			buildStubs: func( mockSql sqlmock.Sqlmock, mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient ) {
+				id := uuid.New()
+				mockSql.ExpectBegin()
+				mockSql.ExpectQuery(`INSERT INTO "contracts" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+				mockSql.ExpectQuery(`INSERT INTO "resource_quota" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
+				mockSql.ExpectCommit()
+
+				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).
+					Return(&pb.IDResponse{
+						Code:  pb.Code_INVALID_ARGUMENT,
+						Error: &pb.Error{
+	       					Msg: fmt.Sprintf("invalid contract ID %s", id),
+	       				},
+					}, nil)
+			},
+			checkResponse: func(res *pb.CreateContractResponse){
+				require.Equal(t, res.Code, pb.Code_INVALID_ARGUMENT)
+			},
+		},
+		{
+			name: "ARGO_WORKFLOW_ERROR",
+			in: req,
+			buildStubs: func( mockSql sqlmock.Sqlmock, mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient ) {
+				id := uuid.New()
+				mockSql.ExpectBegin()
+				mockSql.ExpectQuery(`INSERT INTO "contracts" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uuid.New()))
+				mockSql.ExpectQuery(`INSERT INTO "resource_quota" (.+) RETURNING`).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
+				mockSql.ExpectCommit()
+
+				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).Return(&pb.IDResponse{
+					Code:  pb.Code_OK_UNSPECIFIED,
+					Error: nil,
+					Id:    id.String(),
+				}, nil)
+
+				mockArgoClient.EXPECT().
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any() ).
+					Times(1).
+					Return(randomString("workflowName"), errors.New("argo error"))
+			},
+			checkResponse: func(res *pb.CreateContractResponse){
+				require.Equal(t, res.Code, pb.Code_INTERNAL)
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockAccessor, mockSql, _ := getAccessor()
+			mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
+			mockArgoClient := mockargo.NewMockClient(ctrl)
+
+			// injection
+			contractAccessor = mockAccessor
+			cspInfoClient = gc.NewCspInfoServiceClient(nil, mockInfoClient)
+			argowfClient = mockArgoClient 
+			
+			tc.buildStubs(mockSql, mockInfoClient, mockArgoClient)
+
+			s := server{}
+			res, err := s.CreateContract(ctx, &tc.in)
+			require.NoError(t, err)
+
+			tc.checkResponse(res)
+		})
+	}
+}
+
+
+
+type ResourceQuota struct {
+	ID         uuid.UUID `gorm:"primarykey;type:uuid;default:uuid_generate_v4()"`
+	Cpu        int64
+	Memory     int64
+	Block      int64
+	BlockSsd   int64
+	Fs         int64
+	FsSsd      int64
+	ContractID uuid.UUID `gorm:"type:uuid"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+func randomContract() (contract.Contract) {
+	return contract.Contract {
+		ID: uuid.New(),
+		ContractorName: randomString("NAME"),
 		AvailableServices: []string{"lma"},
+		UpdatedAt: time.Now(),
+		CreatedAt: time.Now(),
 	}
-	// ctx, in.GetContractId(), in.GetCspName(), in.GetCspAuth())
-	mockInfoClient.EXPECT().CreateCSPInfo(
-		gomock.Any(),
-		gomock.Any(),
-	).Return(&pb.IDResponse{
-		Code:  pb.Code_OK_UNSPECIFIED,
-		Error: nil,
-		Id:    "a254a66e-7225-4527-bf4c-9b5494c99b37",
-	}, nil)
-	res, err := s.CreateContract(ctx, &req)
-	if err != nil {
-		t.Error("error occurred " + err.Error())
-	}
-
-	if res.Code != pb.Code_OK_UNSPECIFIED {
-		t.Error("Not expected response code:", res.Code)
-	}
-	if res.CspId == "" {
-		t.Error("CspId is empty.")
-	}
-
-	contractID = res.ContractId
 }
 
-func TestUpdateQuota(t *testing.T) {
-	var err error
-	s := server{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	contractAccessor, err = getAccessor()
-	if err != nil {
-		t.Errorf("unexpected error %s", err)
+func randomResourceQuota( contractId uuid.UUID) (contract.ResourceQuota) {
+	return contract.ResourceQuota {
+		ID: uuid.New(),
+		Cpu: 20,
+		Memory: 40,
+		Block: 12800000,
+		BlockSsd: 12800000,
+		Fs: 12800000,
+		FsSsd: 12800000,
+		ContractID: contractId,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
-	req := pb.UpdateQuotaRequest{
-		ContractId: contractID,
+}
+
+func reflectToRequest( contract contract.Contract, resourceQuota contract.ResourceQuota ) (pb.CreateContractRequest) {
+	return pb.CreateContractRequest {
+		ContractorName: contract.ContractorName,
+		CspName: "aws",
+		CspAuth: "{'token':'csp_auth_token'}",
+		AvailableServices: contract.AvailableServices,
 		Quota: &pb.ContractQuota{
-			Cpu: 40,
+			Cpu: resourceQuota.Cpu,
+			Memory: resourceQuota.Memory,
+			Block: resourceQuota.Block,
+			BlockSsd: resourceQuota.BlockSsd,
+			Fs: resourceQuota.Fs,
+			FsSsd: resourceQuota.FsSsd,
 		},
-	}
-	res, err := s.UpdateQuota(ctx, &req)
-	if err != nil {
-		t.Error("error occurred " + err.Error())
-	}
-
-	expected := &pb.UpdateQuotaResponse{
-		Code:  pb.Code_OK_UNSPECIFIED,
-		Error: nil,
-		PrevQuota: &pb.ContractQuota{
-			Cpu:    20,
-			Memory: 40,
-			Block:  12800000,
-			Fs:     12800000,
-		},
-		CurrentQuota: &pb.ContractQuota{
-			Cpu:    40,
-			Memory: 40,
-			Block:  12800000,
-			Fs:     12800000,
-		},
-	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
 	}
 }
 
-func TestUpdateServices(t *testing.T) {
-	var err error
-	s := server{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	contractAccessor, err = getAccessor()
-	if err != nil {
-		t.Errorf("unexpected error %s", err)
-	}
-	req := pb.UpdateServicesRequest{
-		ContractId:        contractID,
-		AvailableServices: []string{"lma", "servicemesh"},
-	}
-	res, err := s.UpdateServices(ctx, &req)
-	if err != nil {
-		t.Error("error occurred " + err.Error())
-	}
-
-	expected := &pb.UpdateServicesResponse{
-		Code:            pb.Code_OK_UNSPECIFIED,
-		Error:           nil,
-		PrevServices:    []string{"lma"},
-		CurrentServices: []string{"lma", "servicemesh"},
-	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
-	}
-}
-
-func TestGetContract_InvalidArgument(t *testing.T) {
-	s := server{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	req := pb.GetContractRequest{
-		ContractId: "cbp-100002-xdkzkl",
-	}
-	res, _ := s.GetContract(ctx, &req)
-
-	expected := &pb.GetContractResponse{
-		Code: pb.Code_INVALID_ARGUMENT,
-		Error: &pb.Error{
-			Msg: "invalid contract ID cbp-100002-xdkzkl",
-		},
-	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
-	}
-}
-
-func TestGetQuota(t *testing.T) {
-	s := server{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	req := pb.GetQuotaRequest{
-		ContractId: contractID,
-	}
-	res, err := s.GetQuota(ctx, &req)
-	if err != nil {
-		t.Error("error occurred " + err.Error())
-	}
-
-	expected := &pb.GetQuotaResponse{
-		Code:  pb.Code_OK_UNSPECIFIED,
-		Error: nil,
-		Quota: &pb.ContractQuota{
-			Cpu:      40,
-			Memory:   40,
-			Block:    12800000,
-			BlockSsd: 0,
-			Fs:       12800000,
-			FsSsd:    0,
-		},
-	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
-	}
-}
-
-func TestGetAvailableServices(t *testing.T) {
-	s := server{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	req := pb.GetAvailableServicesRequest{
-		ContractId: contractID,
-	}
-	res, err := s.GetAvailableServices(ctx, &req)
-	if err != nil {
-		t.Error("error occurred " + err.Error())
-	}
-
-	expected := &pb.GetAvailableServicesResponse{
-		Code:                pb.Code_OK_UNSPECIFIED,
-		Error:               nil,
-		AvaiableServiceApps: []string{"lma", "servicemesh"},
-	}
-	if !reflect.DeepEqual(expected, res) {
-		t.Errorf("%v != %v", expected, res)
-	}
-}
-
-func getRandomString(prefix string) string {
+func randomString(prefix string) string {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	return fmt.Sprintf("%s-%d", prefix, r.Int31n(1000000000))
