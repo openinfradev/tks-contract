@@ -30,6 +30,6 @@ docker pull docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS
 docker run --name tks-contract -p 9110:9110 -d \
   docker.pkg.github.com/sktelecom/tks-contract/tks-contract:$TAGS \
   server \
-  # -port 9110
+  # -port 9110 
 ```
 
