@@ -22,4 +22,4 @@ replace github.com/openinfradev/tks-contract => ./
 
 //replace github.com/openinfradev/tks-proto => ../tks-proto
 //replace github.com/openinfradev/tks-cluster-lcm => ../tks-cluster-lcm
-replace github.com/openinfradev/tks-common => ../../tks-common
+//replace github.com/openinfradev/tks-common => ../../tks-common
