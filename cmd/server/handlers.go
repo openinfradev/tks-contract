@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/openinfradev/tks-contract/pkg/contract"
-	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
-	"github.com/openinfradev/tks-contract/pkg/log"
+
+	"github.com/openinfradev/tks-common/pkg/log"
+	"github.com/openinfradev/tks-common/pkg/argowf"
+	gc "github.com/openinfradev/tks-common/pkg/grpc_client"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
-	"github.com/openinfradev/tks-cluster-lcm/pkg/argowf"
+
+	"github.com/openinfradev/tks-contract/pkg/contract"
 )
 
 var (
@@ -33,7 +35,6 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 	log.Info(contractAccessor)
 	contractId, err := contractAccessor.Create(in.GetContractorName(), in.GetAvailableServices(), in.GetQuota())
-	log.Info(err)
 	if err != nil {
 		return &pb.CreateContractResponse{
 			Code: pb.Code_NOT_FOUND,
@@ -204,7 +205,7 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 	quota, err := contractAccessor.GetResourceQuota(contractID)
 	if err != nil {
 		return &pb.GetQuotaResponse{
-			Code: pb.Code_INVALID_ARGUMENT,
+			Code: pb.Code_NOT_FOUND,
 			Error: &pb.Error{
 				Msg: err.Error(),
 			},
@@ -239,8 +240,14 @@ func (s *server) GetAvailableServices(ctx context.Context, in *pb.GetAvailableSe
 
 	contract, err := contractAccessor.GetContract(contractID)
 	if err != nil {
-		return nil, fmt.Errorf("could not find contract for contract id %s", contractID)
+		return &pb.GetAvailableServicesResponse{
+			Code: pb.Code_NOT_FOUND,
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}, err
 	}
+
 	res := pb.GetAvailableServicesResponse{
 		Code:                pb.Code_OK_UNSPECIFIED,
 		Error:               nil,

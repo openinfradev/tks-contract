@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/openinfradev/tks-contract/pkg/contract"
-	gcInfo "github.com/openinfradev/tks-contract/pkg/grpc-client"
-	"github.com/openinfradev/tks-contract/pkg/log"
+	gcInfo "github.com/openinfradev/tks-common/pkg/grpc_client"
+	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
