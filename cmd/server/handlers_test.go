@@ -17,8 +17,7 @@ import (
 
 	
 	"github.com/openinfradev/tks-common/pkg/log"
-	"github.com/openinfradev/tks-common/pkg/test"
-	gc "github.com/openinfradev/tks-common/pkg/grpc_client"
+	"github.com/openinfradev/tks-common/pkg/helper"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	mock "github.com/openinfradev/tks-proto/tks_pb/mock"
 	
@@ -69,16 +68,16 @@ func getAccessor() (*contract.Accessor, error) {
 }
 
 func TestMain(m *testing.M) {
-	pool, resource, err := test.CreatePostgres()
+	pool, resource, err := helper.CreatePostgres()
 	if err != nil {
 		fmt.Printf("Could not create postgres: %s", err)
 		os.Exit(-1)
 	}
-	testDBHost, testDBPort = test.GetHostAndPort(resource)
+	testDBHost, testDBPort = helper.GetHostAndPort(resource)
 
 	code := m.Run()
 
-	if err := test.RemovePostgres(pool, resource); err != nil {
+	if err := helper.RemovePostgres(pool, resource); err != nil {
 		fmt.Printf("Could not remove postgres: %s", err)
 		os.Exit(-1)
 	}
@@ -185,9 +184,9 @@ func TestCreateContract(t *testing.T){
 			contractAccessor, err = getAccessor()
 
 			// mocking and injection
-			mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
 			mockArgoClient := mockargo.NewMockClient(ctrl)
-			cspInfoClient = gc.NewCspInfoServiceClient(nil, mockInfoClient)
+			mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
+			cspInfoClient = mockInfoClient
 			argowfClient = mockArgoClient 
 			
 			tc.buildStubs(mockInfoClient, mockArgoClient)

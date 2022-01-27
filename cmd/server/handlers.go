@@ -8,7 +8,7 @@ import (
 
 	"github.com/openinfradev/tks-common/pkg/log"
 	"github.com/openinfradev/tks-common/pkg/argowf"
-	gc "github.com/openinfradev/tks-common/pkg/grpc_client"
+//	"github.com/openinfradev/tks-common/pkg/grpc_client"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 
 	"github.com/openinfradev/tks-contract/pkg/contract"
@@ -16,9 +16,8 @@ import (
 
 var (
 	argowfClient argowf.Client
-
 	contractAccessor *contract.Accessor
-	cspInfoClient    *gc.CspInfoServiceClient
+	cspInfoClient    pb.CspInfoServiceClient
 )
 
 func InitHandlers( argoAddress string, argoPort int ) {
@@ -45,7 +44,11 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	}
 	log.Info("newly created Contract Id:", contractId)
 
-	res, err := cspInfoClient.CreateCSPInfo(ctx, contractId.String(), in.GetCspName(), in.GetCspAuth())
+	res, err := cspInfoClient.CreateCSPInfo(ctx, &pb.CreateCSPInfoRequest{ 
+		ContractId: contractId.String(), 
+		CspName: in.GetCspName(), 
+		Auth: in.GetCspAuth(),
+	})
 	log.Info("newly created CSP Id:", res.GetId())
 	if err != nil {
 		return &pb.CreateContractResponse{

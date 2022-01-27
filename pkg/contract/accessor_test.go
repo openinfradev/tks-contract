@@ -16,7 +16,7 @@ import (
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 
-	test "github.com/openinfradev/tks-common/pkg/test"
+	helper "github.com/openinfradev/tks-common/pkg/helper"
 )
 
 var (
@@ -55,16 +55,16 @@ func getAccessor() (*contract.Accessor, error) {
 }
 
 func TestMain(m *testing.M) {
-	pool, resource, err := test.CreatePostgres()
+	pool, resource, err := helper.CreatePostgres()
 	if err != nil {
 		fmt.Printf("Could not create postgres: %s", err)
 		os.Exit(-1)
 	}
-	testDBHost, testDBPort = test.GetHostAndPort(resource)
+	testDBHost, testDBPort = helper.GetHostAndPort(resource)
 
 	code := m.Run()
 
-	if err := test.RemovePostgres(pool, resource); err != nil {
+	if err := helper.RemovePostgres(pool, resource); err != nil {
 		fmt.Printf("Could not remove postgres: %s", err)
 		os.Exit(-1)
 	}
