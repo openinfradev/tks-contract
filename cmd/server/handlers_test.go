@@ -10,11 +10,11 @@ import (
 	"errors"
 	"os"
 
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"github.com/stretchr/testify/require"
 	"github.com/golang/mock/gomock"
-
 	
 	"github.com/openinfradev/tks-common/pkg/log"
 	"github.com/openinfradev/tks-common/pkg/helper"
@@ -25,8 +25,6 @@ import (
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
 
 	mockargo "github.com/openinfradev/tks-common/pkg/argowf/mock"
-	"github.com/google/uuid"
-	
 )
 
 
@@ -185,9 +183,9 @@ func TestCreateContract(t *testing.T){
 
 			// mocking and injection
 			mockArgoClient := mockargo.NewMockClient(ctrl)
+			argowfClient = mockArgoClient 
 			mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
 			cspInfoClient = mockInfoClient
-			argowfClient = mockArgoClient 
 			
 			tc.buildStubs(mockInfoClient, mockArgoClient)
 
@@ -447,7 +445,6 @@ func TestGetQuota(t *testing.T){
 				}
 
 				require.NoError(t, err)
-				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
 				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
 				require.Equal(t, reflect.DeepEqual(expected, res), true)
 			},
