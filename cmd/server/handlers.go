@@ -5,18 +5,17 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/openinfradev/tks-contract/pkg/contract"
-	gc "github.com/openinfradev/tks-contract/pkg/grpc-client"
-	"github.com/openinfradev/tks-contract/pkg/log"
+
+	"github.com/openinfradev/tks-common/pkg/log"
+	"github.com/openinfradev/tks-common/pkg/argowf"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
-	"github.com/openinfradev/tks-cluster-lcm/pkg/argowf"
+	"github.com/openinfradev/tks-contract/pkg/contract"
 )
 
 var (
-	argowfClient *argowf.Client
-
+	argowfClient argowf.Client
 	contractAccessor *contract.Accessor
-	cspInfoClient    *gc.CspInfoServiceClient
+	cspInfoClient    pb.CspInfoServiceClient
 )
 
 func InitHandlers( argoAddress string, argoPort int ) {
@@ -42,13 +41,26 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	}
 	log.Info("newly created Contract Id:", contractId)
 
-	res, err := cspInfoClient.CreateCSPInfo(ctx, contractId.String(), in.GetCspName(), in.GetCspAuth())
+	res, err := cspInfoClient.CreateCSPInfo(ctx, &pb.CreateCSPInfoRequest{ 
+		ContractId: contractId.String(), 
+		CspName: in.GetCspName(), 
+		Auth: in.GetCspAuth(),
+	})
 	log.Info("newly created CSP Id:", res.GetId())
-	if err != nil || res.GetCode() != pb.Code_OK_UNSPECIFIED {
+	if err != nil {
 		return &pb.CreateContractResponse{
 			Code: res.GetCode(),
 			Error: &pb.Error{
 				Msg: err.Error(),
+			}, 
+		}, nil
+	}
+
+	if res.GetCode() != pb.Code_OK_UNSPECIFIED {
+		return &pb.CreateContractResponse{
+			Code: res.GetCode(),
+			Error: &pb.Error{
+				Msg: res.GetError().String(),
 			}, 
 		}, nil
 	}
@@ -193,7 +205,7 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 	quota, err := contractAccessor.GetResourceQuota(contractID)
 	if err != nil {
 		return &pb.GetQuotaResponse{
-			Code: pb.Code_INVALID_ARGUMENT,
+			Code: pb.Code_NOT_FOUND,
 			Error: &pb.Error{
 				Msg: err.Error(),
 			},
@@ -228,8 +240,14 @@ func (s *server) GetAvailableServices(ctx context.Context, in *pb.GetAvailableSe
 
 	contract, err := contractAccessor.GetContract(contractID)
 	if err != nil {
-		return nil, fmt.Errorf("could not find contract for contract id %s", contractID)
+		return &pb.GetAvailableServicesResponse{
+			Code: pb.Code_NOT_FOUND,
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}, err
 	}
+
 	res := pb.GetAvailableServicesResponse{
 		Code:                pb.Code_OK_UNSPECIFIED,
 		Error:               nil,

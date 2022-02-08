@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/openinfradev/tks-contract/pkg/contract"
-	gcInfo "github.com/openinfradev/tks-contract/pkg/grpc-client"
-	"github.com/openinfradev/tks-contract/pkg/log"
+	"github.com/openinfradev/tks-common/pkg/grpc_client"
+	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
@@ -62,12 +62,12 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to listen:", err)
 	}
-	cc, sc, err := gcInfo.CreateClientsObject(infoServiceAddress, infoServicePort, false, "")
-	cspInfoClient = gcInfo.NewCspInfoServiceClient(cc, sc)
+	cc, sc, err := grpc_client.CreateCspInfoClient(infoServiceAddress, infoServicePort, "tks-contract")
 	if err != nil {
 		log.Error()
 	}
-	defer cspInfoClient.Close()
+	defer cc.Close()
+	cspInfoClient = sc
 
 	s := grpc.NewServer()
 
