@@ -3,15 +3,13 @@ module github.com/openinfradev/tks-contract
 go 1.16
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/lib/pq v1.10.4
-	github.com/openinfradev/tks-common v0.0.0-20220208084831-f0a703a2604f
+	github.com/openinfradev/tks-common v0.0.0-20220210005751-57d957152e7b
 	github.com/openinfradev/tks-proto v0.0.6-0.20211015003551-ed8f9541f40d
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c // indirect
 	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4 // indirect
 	google.golang.org/grpc v1.43.0
 	google.golang.org/protobuf v1.27.1
