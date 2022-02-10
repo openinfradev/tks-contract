@@ -2,41 +2,39 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"reflect"
 	"testing"
 	"time"
-	"errors"
-	"os"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"github.com/stretchr/testify/require"
-	"github.com/golang/mock/gomock"
-	
-	"github.com/openinfradev/tks-common/pkg/log"
-	"github.com/openinfradev/tks-common/pkg/helper"
+
 	mockargo "github.com/openinfradev/tks-common/pkg/argowf/mock"
+	"github.com/openinfradev/tks-common/pkg/helper"
+	"github.com/openinfradev/tks-common/pkg/log"
 
 	pb "github.com/openinfradev/tks-proto/tks_pb"
-	mock "github.com/openinfradev/tks-proto/tks_pb/mock"
-	
+	mocktks "github.com/openinfradev/tks-proto/tks_pb/mock"
+
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
 )
 
-
-
 var (
-	err error
+	err        error
 	testDBHost string
 	testDBPort string
 )
 
 var (
-	contractId string
+	createdContractId    string
 	requestForSenariTest *pb.CreateContractRequest
 )
 
@@ -49,13 +47,13 @@ func init() {
 func getAccessor() (*contract.Accessor, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Seoul",
-		testDBHost, "postgres", "password", "tks", testDBPort )
+		testDBHost, "postgres", "password", "tks", testDBPort)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
 
-	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 
 	if err := db.AutoMigrate(&model.Contract{}); err != nil {
 		return nil, err
@@ -84,87 +82,85 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-
-
 // TestCases
 
-func TestCreateContract(t *testing.T){
+func TestCreateContract(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.CreateContractRequest
-		buildStubs		func(mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient)
-		checkResponse	func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error )
+		name          string
+		in            *pb.CreateContractRequest
+		buildStubs    func(mockInfoClient *mocktks.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient)
+		checkResponse func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error)
 	}{
 		{
 			name: "OK",
-			in: requestForSenariTest,
-			buildStubs: func(mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
-				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).Return(&pb.IDResponse{
+			in:   requestForSenariTest,
+			buildStubs: func(mockInfoClient *mocktks.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
+				mockInfoClient.EXPECT().CreateCSPInfo(gomock.Any(), gomock.Any()).Return(&pb.IDResponse{
 					Code:  pb.Code_OK_UNSPECIFIED,
 					Error: nil,
 					Id:    uuid.New().String(),
 				}, nil)
 
 				mockArgoClient.EXPECT().
-					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any() ).
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(randomString("workflowName"), nil)
 			},
-			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error){
+			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
-				require.True(t, res.ContractId != "" )
+				require.True(t, res.ContractId != "")
 
 				// store for senario test
 				requestForSenariTest = req
-				contractId = res.ContractId
+				createdContractId = res.ContractId
 			},
 		},
 		{
 			name: "NOT_FOUND",
-			in: requestForSenariTest,
-			buildStubs: func(mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
+			in:   requestForSenariTest,
+			buildStubs: func(mockInfoClient *mocktks.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
 			},
-			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error){
+			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
 			},
 		},
 		{
 			name: "CSP_INVALID_ARGUMENT",
-			in: randomRequest(),
-			buildStubs: func(mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
+			in:   randomRequest(),
+			buildStubs: func(mockInfoClient *mocktks.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
 				id := uuid.New()
-				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).
+				mockInfoClient.EXPECT().CreateCSPInfo(gomock.Any(), gomock.Any()).
 					Return(&pb.IDResponse{
-						Code:  pb.Code_INVALID_ARGUMENT,
+						Code: pb.Code_INVALID_ARGUMENT,
 						Error: &pb.Error{
-	       					Msg: fmt.Sprintf("invalid contract ID %s", id),
-	       				},
+							Msg: fmt.Sprintf("invalid contract ID %s", id),
+						},
 					}, nil)
 			},
-			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error){
+			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_INVALID_ARGUMENT)
 			},
 		},
 		{
 			name: "ARGO_WORKFLOW_ERROR",
-			in: randomRequest(),
-			buildStubs: func(mockInfoClient *mock.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
+			in:   randomRequest(),
+			buildStubs: func(mockInfoClient *mocktks.MockCspInfoServiceClient, mockArgoClient *mockargo.MockClient) {
 				id := uuid.New()
-				mockInfoClient.EXPECT().CreateCSPInfo( gomock.Any(), gomock.Any(), ).Return(&pb.IDResponse{
+				mockInfoClient.EXPECT().CreateCSPInfo(gomock.Any(), gomock.Any()).Return(&pb.IDResponse{
 					Code:  pb.Code_OK_UNSPECIFIED,
 					Error: nil,
 					Id:    id.String(),
 				}, nil)
 
 				mockArgoClient.EXPECT().
-					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any() ).
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(randomString("workflowName"), errors.New("argo error"))
 			},
-			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error){
+			checkResponse: func(req *pb.CreateContractRequest, res *pb.CreateContractResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_INTERNAL)
 			},
@@ -185,10 +181,10 @@ func TestCreateContract(t *testing.T){
 
 			// mocking and injection
 			mockArgoClient := mockargo.NewMockClient(ctrl)
-			argowfClient = mockArgoClient 
-			mockInfoClient := mock.NewMockCspInfoServiceClient(ctrl)
+			argowfClient = mockArgoClient
+			mockInfoClient := mocktks.NewMockCspInfoServiceClient(ctrl)
 			cspInfoClient = mockInfoClient
-			
+
 			tc.buildStubs(mockInfoClient, mockArgoClient)
 
 			s := server{}
@@ -199,39 +195,39 @@ func TestCreateContract(t *testing.T){
 
 }
 
-func TestUpdateQuota(t *testing.T){
+func TestUpdateQuota(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.UpdateQuotaRequest
-		checkResponse	func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error )
+		name          string
+		in            *pb.UpdateQuotaRequest
+		checkResponse func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error)
 	}{
 		{
 			name: "OK",
 			in: &pb.UpdateQuotaRequest{
-				ContractId: contractId,
+				ContractId: createdContractId,
 				Quota: &pb.ContractQuota{
 					Cpu: 40,
 				},
 			},
-			checkResponse: func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error){
+			checkResponse: func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error) {
 				expected := &pb.UpdateQuotaResponse{
 					Code:  pb.Code_OK_UNSPECIFIED,
 					Error: nil,
 					PrevQuota: &pb.ContractQuota{
-						Cpu:    20,
-						Memory: 40,
-						Block:  12800000,
+						Cpu:      20,
+						Memory:   40,
+						Block:    12800000,
 						BlockSsd: 12800000,
-						Fs:     12800000,
-						FsSsd:  12800000,
+						Fs:       12800000,
+						FsSsd:    12800000,
 					},
 					CurrentQuota: &pb.ContractQuota{
-						Cpu:    40,
-						Memory: 40,
-						Block:  12800000,
-						Fs:     12800000,
+						Cpu:      40,
+						Memory:   40,
+						Block:    12800000,
+						Fs:       12800000,
 						BlockSsd: 12800000,
-						FsSsd:  12800000,
+						FsSsd:    12800000,
 					},
 				}
 
@@ -250,7 +246,7 @@ func TestUpdateQuota(t *testing.T){
 					Cpu: 40,
 				},
 			},
-			checkResponse: func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error){
+			checkResponse: func(req *pb.UpdateQuotaRequest, res *pb.UpdateQuotaResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_INTERNAL)
 			},
@@ -278,19 +274,19 @@ func TestUpdateQuota(t *testing.T){
 
 }
 
-func TestUpdateServices(t *testing.T){
+func TestUpdateServices(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.UpdateServicesRequest
-		checkResponse	func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error )
+		name          string
+		in            *pb.UpdateServicesRequest
+		checkResponse func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error)
 	}{
 		{
 			name: "OK",
 			in: &pb.UpdateServicesRequest{
-				ContractId:        contractId,
+				ContractId:        createdContractId,
 				AvailableServices: []string{"lma", "servicemesh"},
 			},
-			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error){
+			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error) {
 				expected := &pb.UpdateServicesResponse{
 					Code:            pb.Code_OK_UNSPECIFIED,
 					Error:           nil,
@@ -306,10 +302,10 @@ func TestUpdateServices(t *testing.T){
 		{
 			name: "OK_DELETE_SERVICE",
 			in: &pb.UpdateServicesRequest{
-				ContractId:        contractId,
+				ContractId:        createdContractId,
 				AvailableServices: []string{""},
 			},
-			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error){
+			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error) {
 				expected := &pb.UpdateServicesResponse{
 					Code:            pb.Code_OK_UNSPECIFIED,
 					Error:           nil,
@@ -320,16 +316,16 @@ func TestUpdateServices(t *testing.T){
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
 				require.Equal(t, reflect.DeepEqual(expected, res), true)
-				requestForSenariTest.AvailableServices = []string{""};
+				requestForSenariTest.AvailableServices = []string{""}
 			},
 		},
 		{
 			name: "RECORD_NOT_FOUND",
 			in: &pb.UpdateServicesRequest{
-				ContractId: uuid.New().String(),
+				ContractId:        uuid.New().String(),
 				AvailableServices: []string{"lma", "servicemesh"},
 			},
-			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error){
+			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_INTERNAL)
 			},
@@ -357,24 +353,24 @@ func TestUpdateServices(t *testing.T){
 
 }
 
-func TestGetContract(t *testing.T){
+func TestGetContract(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.GetContractRequest
-		checkResponse	func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error )
+		name          string
+		in            *pb.GetContractRequest
+		checkResponse func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error)
 	}{
 		{
 			name: "OK",
 			in: &pb.GetContractRequest{
-				ContractId: contractId,
+				ContractId: createdContractId,
 			},
-			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error){
+			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error) {
 				require.NoError(t, err)
 				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
 
 				contract := res.GetContract()
 				require.NotNil(t, contract)
-				require.Equal(t, contractId, contract.GetContractId())
+				require.Equal(t, createdContractId, contract.GetContractId())
 				require.Equal(t, requestForSenariTest.ContractorName, contract.GetContractorName())
 			},
 		},
@@ -383,7 +379,7 @@ func TestGetContract(t *testing.T){
 			in: &pb.GetContractRequest{
 				ContractId: "invalid_contract_id",
 			},
-			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error){
+			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_INVALID_ARGUMENT)
 			},
@@ -393,7 +389,7 @@ func TestGetContract(t *testing.T){
 			in: &pb.GetContractRequest{
 				ContractId: uuid.New().String(),
 			},
-			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error){
+			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
 			},
@@ -421,18 +417,18 @@ func TestGetContract(t *testing.T){
 
 }
 
-func TestGetQuota(t *testing.T){
+func TestGetQuota(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.GetQuotaRequest
-		checkResponse	func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error )
+		name          string
+		in            *pb.GetQuotaRequest
+		checkResponse func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error)
 	}{
 		{
 			name: "OK",
 			in: &pb.GetQuotaRequest{
-				ContractId: contractId,
+				ContractId: createdContractId,
 			},
-			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error){
+			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error) {
 				expected := &pb.GetQuotaResponse{
 					Code:  pb.Code_OK_UNSPECIFIED,
 					Error: nil,
@@ -456,7 +452,7 @@ func TestGetQuota(t *testing.T){
 			in: &pb.GetQuotaRequest{
 				ContractId: "invalid_contract_id",
 			},
-			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error){
+			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_INVALID_ARGUMENT)
 			},
@@ -466,7 +462,7 @@ func TestGetQuota(t *testing.T){
 			in: &pb.GetQuotaRequest{
 				ContractId: uuid.New().String(),
 			},
-			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error){
+			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
 			},
@@ -494,18 +490,18 @@ func TestGetQuota(t *testing.T){
 
 }
 
-func TestGetAvailableServices(t *testing.T){
+func TestGetAvailableServices(t *testing.T) {
 	testCases := []struct {
-		name			string
-		in				*pb.GetAvailableServicesRequest
-		checkResponse	func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error )
+		name          string
+		in            *pb.GetAvailableServicesRequest
+		checkResponse func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error)
 	}{
 		{
 			name: "OK",
 			in: &pb.GetAvailableServicesRequest{
-				ContractId: contractId,
+				ContractId: createdContractId,
 			},
-			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error){
+			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error) {
 				expected := &pb.GetAvailableServicesResponse{
 					Code:                pb.Code_OK_UNSPECIFIED,
 					Error:               nil,
@@ -516,7 +512,6 @@ func TestGetAvailableServices(t *testing.T){
 				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
 				require.Equal(t, reflect.DeepEqual(expected, res), true)
 
-
 			},
 		},
 		{
@@ -524,7 +519,7 @@ func TestGetAvailableServices(t *testing.T){
 			in: &pb.GetAvailableServicesRequest{
 				ContractId: "invalid_contract_id",
 			},
-			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error){
+			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_INVALID_ARGUMENT)
 			},
@@ -534,7 +529,7 @@ func TestGetAvailableServices(t *testing.T){
 			in: &pb.GetAvailableServicesRequest{
 				ContractId: uuid.New().String(),
 			},
-			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error){
+			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
 			},
@@ -562,7 +557,6 @@ func TestGetAvailableServices(t *testing.T){
 
 }
 
-
 // Helpers
 
 func randomString(prefix string) string {
@@ -571,49 +565,49 @@ func randomString(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, r.Int31n(1000000000))
 }
 
-func randomContract() (model.Contract) {
-	return model.Contract {
-		ID: uuid.New(),
-		ContractorName: randomString("NAME"),
+func randomContract() model.Contract {
+	return model.Contract{
+		ID:                uuid.New(),
+		ContractorName:    randomString("NAME"),
 		AvailableServices: []string{"lma"},
-		UpdatedAt: time.Now(),
-		CreatedAt: time.Now(),
+		UpdatedAt:         time.Now(),
+		CreatedAt:         time.Now(),
 	}
 }
 
-func randomResourceQuota() (model.ResourceQuota) {
-	return model.ResourceQuota {
-		ID: uuid.New(),
-		Cpu: 20,
-		Memory: 40,
-		Block: 12800000,
+func randomResourceQuota() model.ResourceQuota {
+	return model.ResourceQuota{
+		ID:       uuid.New(),
+		Cpu:      20,
+		Memory:   40,
+		Block:    12800000,
 		BlockSsd: 12800000,
-		Fs: 12800000,
-		FsSsd: 12800000,
+		Fs:       12800000,
+		FsSsd:    12800000,
 		//ContractID: uuid.New(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 }
 
-func reflectToRequest( contract model.Contract, resourceQuota model.ResourceQuota ) (*pb.CreateContractRequest) {
-	return &pb.CreateContractRequest {
-		ContractorName: contract.ContractorName,
-		CspName: "aws",
-		CspAuth: "{'token':'csp_auth_token'}",
+func reflectToRequest(contract model.Contract, resourceQuota model.ResourceQuota) *pb.CreateContractRequest {
+	return &pb.CreateContractRequest{
+		ContractorName:    contract.ContractorName,
+		CspName:           "aws",
+		CspAuth:           "{'token':'csp_auth_token'}",
 		AvailableServices: contract.AvailableServices,
 		Quota: &pb.ContractQuota{
-			Cpu: resourceQuota.Cpu,
-			Memory: resourceQuota.Memory,
-			Block: resourceQuota.Block,
+			Cpu:      resourceQuota.Cpu,
+			Memory:   resourceQuota.Memory,
+			Block:    resourceQuota.Block,
 			BlockSsd: resourceQuota.BlockSsd,
-			Fs: resourceQuota.Fs,
-			FsSsd: resourceQuota.FsSsd,
+			Fs:       resourceQuota.Fs,
+			FsSsd:    resourceQuota.FsSsd,
 		},
 	}
 }
 
-func randomRequest() (*pb.CreateContractRequest){
+func randomRequest() *pb.CreateContractRequest {
 	testContract := randomContract()
 	testResourceQuota := randomResourceQuota()
 	return reflectToRequest(testContract, testResourceQuota)

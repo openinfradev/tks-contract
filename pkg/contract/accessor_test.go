@@ -3,9 +3,9 @@ package contract_test
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
-	"os"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -35,13 +35,13 @@ func init() {
 func getAccessor() (*contract.Accessor, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Seoul",
-		testDBHost, "postgres", "password", "tks", testDBPort )
+		testDBHost, "postgres", "password", "tks", testDBPort)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
 
-	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 
 	if err := db.AutoMigrate(&model.Contract{}); err != nil {
 		return nil, err
@@ -69,7 +69,6 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
-
 
 // TestCases
 

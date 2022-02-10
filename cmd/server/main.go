@@ -6,9 +6,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/openinfradev/tks-contract/pkg/contract"
 	"github.com/openinfradev/tks-common/pkg/grpc_client"
 	"github.com/openinfradev/tks-common/pkg/log"
+	"github.com/openinfradev/tks-contract/pkg/contract"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
@@ -74,7 +74,7 @@ func main() {
 	log.Info("Started to listen port ", port)
 	log.Info("****************************")
 
-	InitHandlers( argoAddress, argoPort )
+	InitHandlers(argoAddress, argoPort)
 
 	pb.RegisterContractServiceServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
