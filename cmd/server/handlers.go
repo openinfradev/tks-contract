@@ -6,26 +6,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/openinfradev/tks-common/pkg/argowf"
 	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
-
-	"github.com/openinfradev/tks-contract/pkg/contract"
 )
-
-var (
-	argowfClient     argowf.Client
-	contractAccessor *contract.Accessor
-	cspInfoClient    pb.CspInfoServiceClient
-)
-
-func InitHandlers(argoAddress string, argoPort int) {
-	_client, err := argowf.New(argoAddress, argoPort)
-	if err != nil {
-		log.Fatal("failed to create argowf client : ", err)
-	}
-	argowfClient = _client
-}
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
