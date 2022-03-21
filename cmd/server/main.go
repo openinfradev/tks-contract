@@ -26,11 +26,11 @@ var (
 )
 
 var (
-	port               int
-	tls                bool
-	tlsClientCertPath  string
-	tlsCertPath        string
-	tlsKeyPath         string
+	port              int
+	tlsEnabled        bool
+	tlsClientCertPath string
+	tlsCertPath       string
+	tlsKeyPath        string
 
 	infoServiceAddress string
 	infoServicePort    int
@@ -44,7 +44,7 @@ var (
 
 func init() {
 	flag.IntVar(&port, "port", 9110, "service port")
-	flag.BoolVar(&tls, "tls", false, "enabled tls")
+	flag.BoolVar(&tlsEnabled, "tlsEnabled", false, "enabled tls")
 	flag.StringVar(&tlsClientCertPath, "tls-client-cert-path", "../../cert/tks-ca.crt", "path of ca cert file for tls")
 	flag.StringVar(&tlsCertPath, "tls-cert-path", "../../cert/tks-server.crt", "path of cert file for tls")
 	flag.StringVar(&tlsKeyPath, "tls-key-path", "../../cert/tks-server.key", "path of key file for tls")
@@ -63,7 +63,7 @@ func main() {
 
 	log.Info("*** Arguments *** ")
 	log.Info("port : ", port)
-	log.Info("tls : ", tls)
+	log.Info("tlsEnabled : ", tlsEnabled)
 	log.Info("tlsClientCertPath : ", tlsClientCertPath)
 	log.Info("tlsCertPath : ", tlsCertPath)
 	log.Info("tlsKeyPath : ", tlsKeyPath)
@@ -94,7 +94,7 @@ func main() {
 	argowfClient = _argowfClient
 
 	// initialize csp_info client
-	cc, sc, err := grpc_client.CreateCspInfoClient(infoServiceAddress, infoServicePort, tls, tlsClientCertPath)
+	cc, sc, err := grpc_client.CreateCspInfoClient(infoServiceAddress, infoServicePort, tlsEnabled, tlsClientCertPath)
 	if err != nil {
 		log.Fatal("failed to create cspinfo client : ", err)
 	}
@@ -102,7 +102,7 @@ func main() {
 	cspInfoClient = sc
 
 	// start server
-	s, conn, err := grpc_server.CreateServer(port, tls, tlsCertPath, tlsKeyPath)
+	s, conn, err := grpc_server.CreateServer(port, tlsEnabled, tlsCertPath, tlsKeyPath)
 	if err != nil {
 		log.Fatal("failed to crate grpc_server : ", err)
 	}
