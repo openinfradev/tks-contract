@@ -2,10 +2,8 @@ package contract_test
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
@@ -83,7 +81,7 @@ func TestCreateContract(t *testing.T) {
 		Block:  12800000,
 		Fs:     12800000,
 	}
-	contractName := getRandomString("gotest")
+	contractName := "default"
 	contractId, err = accessor.Create(contractName, []string{"lma"}, &quota)
 	if err != nil {
 		t.Errorf("an error was unexpected while creating new contract: %s", err)
@@ -132,8 +130,18 @@ func TestGetContract(t *testing.T) {
 	t.Logf("quota cpu: %d", contract.Quota.Cpu)
 }
 
-func getRandomString(prefix string) string {
-	s := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(s)
-	return fmt.Sprintf("%s-%d", prefix, r.Int31n(1000000000))
+func TestGetDefaultContract(t *testing.T) {
+	accessor, err := getAccessor()
+	if err != nil {
+		t.Errorf("an error was unexpected while initilizing database %s", err)
+	}
+	contract, err := accessor.GetDefaultContract()
+
+	if err != nil {
+		t.Errorf("an error was unexpected while querying contract data %s", err)
+	}
+
+	t.Logf("contractor name: %s", contract.ContractorName)
+	t.Logf("quota cpu: %d", contract.Quota.Cpu)
 }
+
