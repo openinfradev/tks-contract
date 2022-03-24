@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
@@ -410,6 +411,64 @@ func TestGetContract(t *testing.T) {
 
 			s := server{}
 			res, err := s.GetContract(ctx, tc.in)
+
+			tc.checkResponse(tc.in, res, err)
+		})
+	}
+
+}
+
+func TestGetDefaultContract(t *testing.T) {
+	testCases := []struct {
+		name          string
+		in            *empty.Empty
+		buildStubs    func()
+		checkResponse func(req *empty.Empty, res *pb.GetContractResponse, err error)
+	}{
+		{
+			name: "NOT_FOUND",
+			in:   &empty.Empty{},
+			buildStubs: func() {
+				_, _ = contractAccessor.Create("NO_DEFAULT_NAME", []string{}, &pb.ContractQuota{})
+			},
+			checkResponse: func(req *empty.Empty, res *pb.GetContractResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, res.Code, pb.Code_NOT_FOUND)
+			},
+		},
+		{
+			name: "OK",
+			in:   &empty.Empty{},
+			buildStubs: func() {
+				_, _ = contractAccessor.Create("default", []string{}, &pb.ContractQuota{})
+			},
+			checkResponse: func(req *empty.Empty, res *pb.GetContractResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
+
+				contract := res.GetContract()
+				require.NotNil(t, contract)
+				require.Equal(t, contract.GetContractorName(), "default")
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			contractAccessor, err = getAccessor()
+
+			tc.buildStubs()
+
+			s := server{}
+			res, err := s.GetDefaultContract(ctx, tc.in)
 
 			tc.checkResponse(tc.in, res, err)
 		})

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 
 	"github.com/openinfradev/tks-common/pkg/log"
@@ -156,6 +157,28 @@ func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*p
 		return &res, err
 	}
 	contract, err := contractAccessor.GetContract(contractID)
+	if err != nil {
+		res := pb.GetContractResponse{
+			Code: pb.Code_NOT_FOUND,
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}
+		return &res, err
+	}
+	res := pb.GetContractResponse{
+		Code:     pb.Code_OK_UNSPECIFIED,
+		Error:    nil,
+		Contract: contract,
+	}
+	return &res, nil
+}
+
+// GetDefaultContract implements pbgo.ContractService.GetDefaultContract gRPC
+func (s *server) GetDefaultContract(ctx context.Context, in *empty.Empty) (*pb.GetContractResponse, error) {
+	log.Info("Request 'GetDefaultContract' ")
+
+	contract, err := contractAccessor.GetDefaultContract()
 	if err != nil {
 		res := pb.GetContractResponse{
 			Code: pb.Code_NOT_FOUND,

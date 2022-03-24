@@ -39,6 +39,21 @@ func (x *Accessor) GetContract(id uuid.UUID) (*pb.Contract, error) {
 	return &resContract, nil
 }
 
+// GetDefaultContract returns a contract from database.
+func (x *Accessor) GetDefaultContract() (*pb.Contract, error) {
+	var contract model.Contract
+	res := x.db.First(&contract, "contractor_name = 'default'")
+	if res.RowsAffected == 0 || res.Error != nil {
+		return &pb.Contract{}, fmt.Errorf("Not found default contract")
+	}
+	quota, err := x.GetResourceQuota(contract.ID)
+	if err != nil {
+		return &pb.Contract{}, err
+	}
+	resContract := reflectToPbContract(contract, &quota)
+	return &resContract, nil
+}
+
 // getContract returns a resource quota from database.
 func (x *Accessor) GetResourceQuota(contractID uuid.UUID) (pb.ContractQuota, error) {
 	var quota model.ResourceQuota
