@@ -54,6 +54,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	nameSpace := "argo"
 	parameters := []string{
 		"contract_id=" + contractId.String(),
+		"revision=" + revision,
 	}
 
 	workflowName, err := argowfClient.SumbitWorkflowFromWftpl(ctx, workflowTemplate, nameSpace, parameters)

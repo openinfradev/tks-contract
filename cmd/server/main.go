@@ -40,6 +40,7 @@ var (
 	dbport             string
 	dbuser             string
 	dbpassword         string
+	revision           string
 )
 
 func init() {
@@ -56,6 +57,7 @@ func init() {
 	flag.StringVar(&dbport, "dbport", "5432", "port of postgreSQL")
 	flag.StringVar(&dbuser, "dbuser", "postgres", "postgreSQL user")
 	flag.StringVar(&dbpassword, "dbpassword", "password", "password for postgreSQL user")
+	flag.StringVar(&revision, "revision", "main", "revision for workflow parameter")
 }
 
 func main() {
@@ -75,6 +77,7 @@ func main() {
 	log.Info("dbport : ", dbport)
 	log.Info("dbuser : ", dbuser)
 	log.Info("dbpassword : ", dbpassword)
+	log.Info("revision : ", revision)
 	log.Info("****************** ")
 
 	// initialize database
