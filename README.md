@@ -20,7 +20,7 @@ TKS는 Taco Kubernetes Service의 약자로, SK Telecom이 만든 GitOps기반�
 ### 서비스 구동 (For go developers)
 
 ```
-$ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/tks-contract ./cmd/server/
+$ go build -o bin/tks-contract ./cmd/server/
 $ bin/tks-contract -port 9110
 ```
 
@@ -28,7 +28,7 @@ $ bin/tks-contract -port 9110
 ```
 $ docker pull sktcloud/tks-contract
 $ docker run --name tks-contract -p 9110:9110 -d \
-   sktcloud/tks-contract server -port 9110 
+   sktcloud/tks-contract -port 9110
 ```
 
 ### gRPC API 호출 예제
