@@ -99,7 +99,7 @@ func TestCreateContract(t *testing.T) {
 				mockInfoClient.EXPECT().CreateCSPInfo(gomock.Any(), gomock.Any()).Return(&pb.IDResponse{
 					Code:  pb.Code_OK_UNSPECIFIED,
 					Error: nil,
-					Id:    uuid.New().String(),
+					Id:    helper.GenerateContractId(),
 				}, nil)
 
 				mockArgoClient.EXPECT().
@@ -242,7 +242,7 @@ func TestUpdateQuota(t *testing.T) {
 		{
 			name: "RECORD_NOT_FOUND",
 			in: &pb.UpdateQuotaRequest{
-				ContractId: uuid.New().String(),
+				ContractId: helper.GenerateContractId(),
 				Quota: &pb.ContractQuota{
 					Cpu: 40,
 				},
@@ -323,7 +323,7 @@ func TestUpdateServices(t *testing.T) {
 		{
 			name: "RECORD_NOT_FOUND",
 			in: &pb.UpdateServicesRequest{
-				ContractId:        uuid.New().String(),
+				ContractId:        helper.GenerateContractId(),
 				AvailableServices: []string{"lma", "servicemesh"},
 			},
 			checkResponse: func(req *pb.UpdateServicesRequest, res *pb.UpdateServicesResponse, err error) {
@@ -388,7 +388,7 @@ func TestGetContract(t *testing.T) {
 		{
 			name: "NOT_FOUND",
 			in: &pb.GetContractRequest{
-				ContractId: uuid.New().String(),
+				ContractId: helper.GenerateContractId(),
 			},
 			checkResponse: func(req *pb.GetContractRequest, res *pb.GetContractResponse, err error) {
 				require.Error(t, err)
@@ -519,7 +519,7 @@ func TestGetQuota(t *testing.T) {
 		{
 			name: "NOT_FOUND",
 			in: &pb.GetQuotaRequest{
-				ContractId: uuid.New().String(),
+				ContractId: helper.GenerateContractId(),
 			},
 			checkResponse: func(req *pb.GetQuotaRequest, res *pb.GetQuotaResponse, err error) {
 				require.Error(t, err)
@@ -586,7 +586,7 @@ func TestGetAvailableServices(t *testing.T) {
 		{
 			name: "NOT_FOUND",
 			in: &pb.GetAvailableServicesRequest{
-				ContractId: uuid.New().String(),
+				ContractId: helper.GenerateContractId(),
 			},
 			checkResponse: func(req *pb.GetAvailableServicesRequest, res *pb.GetAvailableServicesResponse, err error) {
 				require.Error(t, err)
@@ -626,7 +626,7 @@ func randomString(prefix string) string {
 
 func randomContract() model.Contract {
 	return model.Contract{
-		ID:                uuid.New(),
+		ID:                helper.GenerateContractId(),
 		ContractorName:    randomString("NAME"),
 		AvailableServices: []string{"lma"},
 		UpdatedAt:         time.Now(),

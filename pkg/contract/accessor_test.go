@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -23,7 +22,7 @@ var (
 )
 
 var (
-	contractId uuid.UUID
+	contractId string
 )
 
 func init() {
@@ -144,4 +143,3 @@ func TestGetDefaultContract(t *testing.T) {
 	t.Logf("contractor name: %s", contract.ContractorName)
 	t.Logf("quota cpu: %d", contract.Quota.Cpu)
 }
-

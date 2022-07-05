@@ -6,7 +6,6 @@ import (
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	uuid "github.com/google/uuid"
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	"gorm.io/gorm"
@@ -25,9 +24,9 @@ func New(db *gorm.DB) *Accessor {
 }
 
 // GetContract returns a contract from database.
-func (x *Accessor) GetContract(id uuid.UUID) (*pb.Contract, error) {
+func (x *Accessor) GetContract(id string) (*pb.Contract, error) {
 	var contract model.Contract
-	res := x.db.First(&contract, id)
+	res := x.db.First(&contract, "id = ?", id)
 	if res.RowsAffected == 0 || res.Error != nil {
 		return &pb.Contract{}, fmt.Errorf("Not found contract for %s", id)
 	}
@@ -55,7 +54,7 @@ func (x *Accessor) GetDefaultContract() (*pb.Contract, error) {
 }
 
 // getContract returns a resource quota from database.
-func (x *Accessor) GetResourceQuota(contractID uuid.UUID) (pb.ContractQuota, error) {
+func (x *Accessor) GetResourceQuota(contractID string) (pb.ContractQuota, error) {
 	var quota model.ResourceQuota
 	res := x.db.First(&quota, "contract_id = ?", contractID)
 	if res.RowsAffected == 0 || res.Error != nil {
@@ -88,7 +87,7 @@ func (x *Accessor) List(offset, limit int) ([]pb.Contract, error) {
 }
 
 // Create creates a new contract in database.
-func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota) (uuid.UUID, error) {
+func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota) (string, error) {
 	pqStrArr := pq.StringArray{}
 
 	for _, svc := range availableServices {
@@ -113,7 +112,7 @@ func (x *Accessor) Create(name string, availableServices []string, quota *pb.Con
 }
 
 // UpdateResourceQuota updates resource quota.
-func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota *pb.ContractQuota) (
+func (x *Accessor) UpdateResourceQuota(contractID string, quota *pb.ContractQuota) (
 	p *pb.ContractQuota, c *pb.ContractQuota, err error) {
 	prev, err := x.GetResourceQuota(contractID)
 	if err != nil {
@@ -161,7 +160,7 @@ func (x *Accessor) UpdateResourceQuota(contractID uuid.UUID, quota *pb.ContractQ
 }
 
 // UpdateAvailableServices updates available service list and resource quota.
-func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []string) (
+func (x *Accessor) UpdateAvailableServices(id string, availableServices []string) (
 	prev []string, curr []string, err error) {
 	pqStrArr := pq.StringArray{}
 
@@ -171,7 +170,7 @@ func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []str
 	var (
 		contract model.Contract
 	)
-	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
+	if res := x.db.First(&contract, "id = ?", id); res.RowsAffected == 0 || res.Error != nil {
 		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
 	}
 	prev = contract.AvailableServices
@@ -179,7 +178,7 @@ func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []str
 		return prev, curr, fmt.Errorf("RowsAffected is 0 for contract id %s", id)
 	}
 
-	if res := x.db.First(&contract, id); res.RowsAffected == 0 || res.Error != nil {
+	if res := x.db.First(&contract, "id = ?", id); res.RowsAffected == 0 || res.Error != nil {
 		return nil, nil, fmt.Errorf("could not find contract for contract id %s", id)
 	}
 	curr = contract.AvailableServices
@@ -188,7 +187,7 @@ func (x *Accessor) UpdateAvailableServices(id uuid.UUID, availableServices []str
 
 func reflectToPbContract(contract model.Contract, quota *pb.ContractQuota) pb.Contract {
 	return pb.Contract{
-		ContractId:        contract.ID.String(),
+		ContractId:        contract.ID,
 		ContractorName:    contract.ContractorName,
 		AvailableServices: contract.AvailableServices,
 		UpdatedAt:         timestamppb.New(contract.UpdatedAt),

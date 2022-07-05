@@ -16,7 +16,7 @@ type ResourceQuota struct {
 	BlockSsd   int64
 	Fs         int64
 	FsSsd      int64
-	ContractID uuid.UUID `gorm:"type:uuid"`
+	ContractID string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
