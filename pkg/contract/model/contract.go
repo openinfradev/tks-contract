@@ -3,14 +3,15 @@ package model
 import (
 	"time"
 
-	uuid "github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
+
+	"github.com/openinfradev/tks-common/pkg/helper"
 )
 
 // Contract represents a contract data in Database.
 type Contract struct {
-	ID                uuid.UUID      `gorm:"primarykey;type:uuid;default:uuid_generate_v4()"`
+	ID                string         `gorm:"primaryKey"`
 	ContractorName    string         `gorm:"uniqueIndex"`
 	AvailableServices pq.StringArray `gorm:"type:text[]"`
 	UpdatedAt         time.Time
@@ -18,6 +19,6 @@ type Contract struct {
 }
 
 func (c *Contract) BeforeCreate(tx *gorm.DB) (err error) {
-	c.ID = uuid.New()
+	c.ID = helper.GenerateContractId()
 	return nil
 }

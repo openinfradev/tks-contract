@@ -5,11 +5,19 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/google/uuid"
 
+	"github.com/openinfradev/tks-common/pkg/helper"
 	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 )
+
+func checkContractId(contractId string) (string, error) {
+	if !helper.ValidateContractId(contractId) {
+		return "", fmt.Errorf("invalid contract ID %s", contractId)
+	}
+
+	return contractId, nil
+}
 
 // CreateContract implements pbgo.ContractService.CreateContract gRPC
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
@@ -27,7 +35,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	log.Info("newly created Contract Id:", contractId)
 
 	res, err := cspInfoClient.CreateCSPInfo(ctx, &pb.CreateCSPInfoRequest{
-		ContractId: contractId.String(),
+		ContractId: contractId,
 		CspName:    in.GetCspName(),
 		Auth:       in.GetCspAuth(),
 	})
@@ -53,7 +61,7 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	workflowTemplate := "tks-create-contract-repo"
 	nameSpace := "argo"
 	parameters := []string{
-		"contract_id=" + contractId.String(),
+		"contract_id=" + contractId,
 		"revision=" + revision,
 	}
 
@@ -77,14 +85,14 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 		Code:       pb.Code_OK_UNSPECIFIED,
 		Error:      nil,
 		CspId:      res.GetId(),
-		ContractId: contractId.String(),
+		ContractId: contractId,
 	}, nil
 }
 
 // UpdateQuota implements pbgo.ContractService.UpdateQuota gRPC
 func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*pb.UpdateQuotaResponse, error) {
 	log.Info("Request 'UpdateQuota' for contract id ", in.GetContractId())
-	contractID, err := uuid.Parse(in.GetContractId())
+	contractID, err := checkContractId(in.GetContractId())
 	if err != nil {
 		res := pb.UpdateQuotaResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
@@ -116,7 +124,7 @@ func (s *server) UpdateQuota(ctx context.Context, in *pb.UpdateQuotaRequest) (*p
 // UpdateServices implements pbgo.ContractService.UpdateServices gRPC
 func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesRequest) (*pb.UpdateServicesResponse, error) {
 	log.Info("Request 'UpdateServices' for contract id ", in.GetContractId())
-	contractID, err := uuid.Parse(in.GetContractId())
+	contractID, err := checkContractId(in.GetContractId())
 	if err != nil {
 		res := pb.UpdateServicesResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
@@ -147,7 +155,7 @@ func (s *server) UpdateServices(ctx context.Context, in *pb.UpdateServicesReques
 // GetContract implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetContract(ctx context.Context, in *pb.GetContractRequest) (*pb.GetContractResponse, error) {
 	log.Info("Request 'GetContract' for contract id ", in.GetContractId())
-	contractID, err := uuid.Parse(in.GetContractId())
+	contractID, err := checkContractId(in.GetContractId())
 	if err != nil {
 		res := pb.GetContractResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
@@ -200,7 +208,7 @@ func (s *server) GetDefaultContract(ctx context.Context, in *empty.Empty) (*pb.G
 // GetQuota implements pbgo.ContractService.GetContract gRPC
 func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQuotaResponse, error) {
 	log.Info("Request 'GetQuota' for contract id ", in.GetContractId())
-	contractID, err := uuid.Parse(in.GetContractId())
+	contractID, err := checkContractId(in.GetContractId())
 	if err != nil {
 		return &pb.GetQuotaResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
@@ -236,7 +244,7 @@ func (s *server) GetQuota(ctx context.Context, in *pb.GetQuotaRequest) (*pb.GetQ
 // GetAvailableServices implements pbgo.ContractService.GetAvailableServices gRPC
 func (s *server) GetAvailableServices(ctx context.Context, in *pb.GetAvailableServicesRequest) (*pb.GetAvailableServicesResponse, error) {
 	log.Info("Request 'GetAvailableServices' for contract id ", in.GetContractId())
-	contractID, err := uuid.Parse(in.GetContractId())
+	contractID, err := checkContractId(in.GetContractId())
 	if err != nil {
 		return &pb.GetAvailableServicesResponse{
 			Code: pb.Code_INVALID_ARGUMENT,
