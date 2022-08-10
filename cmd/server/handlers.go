@@ -68,6 +68,13 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 	workflowName, err := argowfClient.SumbitWorkflowFromWftpl(ctx, workflowTemplate, nameSpace, parameters)
 	if err != nil {
 		log.Error("failed to submit argo workflow template. err : ", err)
+
+		// 생성된 contract 를 rollback 한다.
+		err := contractAccessor.Delete(contractId)
+		if err != nil {
+			log.Error("Failed to delete contract ", contractId)
+		}
+
 		return &pb.CreateContractResponse{
 			Code: pb.Code_INTERNAL,
 			Error: &pb.Error{
@@ -201,6 +208,30 @@ func (s *server) GetDefaultContract(ctx context.Context, in *empty.Empty) (*pb.G
 		Code:     pb.Code_OK_UNSPECIFIED,
 		Error:    nil,
 		Contract: contract,
+	}
+	return &res, nil
+}
+
+// GetContracts implements pbgo.ContractService.GetContracts gRPC
+func (s *server) GetContracts(ctx context.Context, in *pb.GetContractsRequest) (*pb.GetContractsResponse, error) {
+	log.Info("Request 'GetContracts' ")
+
+	const OFFSET = 0
+	const MX_LIMIT = 100
+	contracts, err := contractAccessor.List(OFFSET, MX_LIMIT)
+	if err != nil {
+		res := pb.GetContractsResponse{
+			Code: pb.Code_NOT_FOUND,
+			Error: &pb.Error{
+				Msg: err.Error(),
+			},
+		}
+		return &res, err
+	}
+	res := pb.GetContractsResponse{
+		Code:      pb.Code_OK_UNSPECIFIED,
+		Error:     nil,
+		Contracts: contracts,
 	}
 	return &res, nil
 }

@@ -129,6 +129,20 @@ func TestGetContract(t *testing.T) {
 	t.Logf("quota cpu: %d", contract.Quota.Cpu)
 }
 
+func TestGetContracts(t *testing.T) {
+	accessor, err := getAccessor()
+	if err != nil {
+		t.Errorf("an error was unexpected while initilizing database %s", err)
+	}
+	contracts, err := accessor.List(0, 10)
+
+	if err != nil {
+		t.Errorf("an error was unexpected while querying contract data %s", err)
+	}
+
+	t.Logf("contracts length: %d", len(contracts))
+}
+
 func TestGetDefaultContract(t *testing.T) {
 	accessor, err := getAccessor()
 	if err != nil {

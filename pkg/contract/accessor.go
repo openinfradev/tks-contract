@@ -5,10 +5,11 @@ import (
 
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 
+	"github.com/openinfradev/tks-common/pkg/log"
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
-	"gorm.io/gorm"
 )
 
 // Accessor is an accessor to in-memory contracts.
@@ -56,7 +57,7 @@ func (x *Accessor) GetDefaultContract() (*pb.Contract, error) {
 // getContract returns a resource quota from database.
 func (x *Accessor) GetResourceQuota(contractID string) (pb.ContractQuota, error) {
 	var quota model.ResourceQuota
-	res := x.db.First(&quota, "contract_id = ?", contractID)
+	res := x.db.Limit(1).Find(&quota, "contract_id = ?", contractID)
 	if res.RowsAffected == 0 || res.Error != nil {
 		return pb.ContractQuota{}, fmt.Errorf("Not found quota for contract id %s", contractID)
 	}
@@ -65,23 +66,25 @@ func (x *Accessor) GetResourceQuota(contractID string) (pb.ContractQuota, error)
 }
 
 // List returns a list of contracts from database.
-func (x *Accessor) List(offset, limit int) ([]pb.Contract, error) {
+func (x *Accessor) List(offset, limit int) ([]*pb.Contract, error) {
 	var (
 		contracts       []model.Contract
 		quota           model.ResourceQuota
-		resultContracts []pb.Contract
+		resultContracts []*pb.Contract
 	)
 	res := x.db.Offset(offset).Limit(limit).Find(&contracts)
 	if res.Error != nil {
 		return nil, res.Error
 	}
 	for _, contract := range contracts {
-		res = x.db.First(&quota, "contract_id = ?", contract.ID)
+		quota = model.ResourceQuota{}
+		res = x.db.Limit(1).Find(&quota, "contract_id = ?", contract.ID)
 		if res.RowsAffected == 0 || res.Error != nil {
 			return nil, fmt.Errorf("Not found quota for contract id %s", contract.ID)
 		}
 		pbQuota := reflectToPbQuota(quota)
-		resultContracts = append(resultContracts, reflectToPbContract(contract, &pbQuota))
+		resContract := reflectToPbContract(contract, &pbQuota)
+		resultContracts = append(resultContracts, &resContract)
 	}
 	return resultContracts, nil
 }
@@ -105,10 +108,31 @@ func (x *Accessor) Create(name string, availableServices []string, quota *pb.Con
 		if res.Error != nil {
 			return res.Error
 		}
+		log.Info("sucessfully created contract ID ", contract.ID)
 		return nil
 	})
 
 	return contract.ID, err
+}
+
+// Delete contract
+func (x *Accessor) Delete(contractId string) error {
+	err := x.db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Delete(&model.ResourceQuota{}, "contract_id = ?", contractId)
+		log.Info("resource quota is deleted! contractId : ", contractId)
+		if res.Error != nil {
+			return fmt.Errorf("could not delete resource quota for contractId %s", contractId)
+		}
+
+		res = tx.Delete(&model.Contract{}, "id = ?", contractId)
+		log.Info("contract is deleted! contractId : ", contractId)
+		if res.Error != nil {
+			return fmt.Errorf("could not delete contract for contractId %s", contractId)
+		}
+		return nil
+	})
+
+	return err
 }
 
 // UpdateResourceQuota updates resource quota.
