@@ -19,7 +19,8 @@ import (
 
 	mockargo "github.com/openinfradev/tks-common/pkg/argowf/mock"
 	"github.com/openinfradev/tks-common/pkg/helper"
-	"github.com/openinfradev/tks-common/pkg/log"
+
+	//"github.com/openinfradev/tks-common/pkg/log"
 
 	pb "github.com/openinfradev/tks-proto/tks_pb"
 	mocktks "github.com/openinfradev/tks-proto/tks_pb/mock"
@@ -40,7 +41,7 @@ var (
 )
 
 func init() {
-	log.Disable()
+	//log.Disable()
 
 	requestForSenariTest = randomRequest()
 }
@@ -411,6 +412,47 @@ func TestGetContract(t *testing.T) {
 
 			s := server{}
 			res, err := s.GetContract(ctx, tc.in)
+
+			tc.checkResponse(tc.in, res, err)
+		})
+	}
+
+}
+
+func TestGetContracts(t *testing.T) {
+	testCases := []struct {
+		name          string
+		in            *pb.GetContractsRequest
+		checkResponse func(req *pb.GetContractsRequest, res *pb.GetContractsResponse, err error)
+	}{
+		{
+			name: "OK",
+			in:   &pb.GetContractsRequest{},
+			checkResponse: func(req *pb.GetContractsRequest, res *pb.GetContractsResponse, err error) {
+				require.NoError(t, err)
+				require.Equal(t, res.Code, pb.Code_OK_UNSPECIFIED)
+
+				contracts := res.GetContracts()
+				require.NotNil(t, contracts)
+				require.True(t, len(contracts) > 0)
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			contractAccessor, err = getAccessor()
+
+			s := server{}
+			res, err := s.GetContracts(ctx, tc.in)
 
 			tc.checkResponse(tc.in, res, err)
 		})
