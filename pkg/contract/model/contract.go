@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	uuid "github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 
@@ -14,6 +15,8 @@ type Contract struct {
 	ID                string         `gorm:"primaryKey"`
 	ContractorName    string         `gorm:"uniqueIndex"`
 	AvailableServices pq.StringArray `gorm:"type:text[]"`
+	Creator           uuid.UUID
+	Description       string
 	UpdatedAt         time.Time
 	CreatedAt         time.Time
 }

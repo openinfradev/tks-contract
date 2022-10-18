@@ -8,6 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/google/uuid"
 	log "github.com/openinfradev/tks-common/pkg/log"
 	"github.com/openinfradev/tks-contract/pkg/contract"
 	model "github.com/openinfradev/tks-contract/pkg/contract/model"
@@ -81,7 +82,7 @@ func TestCreateContract(t *testing.T) {
 		Fs:     12800000,
 	}
 	contractName := "default"
-	contractId, err = accessor.Create(contractName, []string{"lma"}, &quota)
+	contractId, err = accessor.Create(contractName, []string{"lma"}, &quota, uuid.New(), "")
 	if err != nil {
 		t.Errorf("an error was unexpected while creating new contract: %s", err)
 	}

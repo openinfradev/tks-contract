@@ -471,7 +471,7 @@ func TestGetDefaultContract(t *testing.T) {
 			name: "NOT_FOUND",
 			in:   &empty.Empty{},
 			buildStubs: func() {
-				_, _ = contractAccessor.Create("NO_DEFAULT_NAME", []string{}, &pb.ContractQuota{})
+				_, _ = contractAccessor.Create("NO_DEFAULT_NAME", []string{}, &pb.ContractQuota{}, uuid.New(), "")
 			},
 			checkResponse: func(req *empty.Empty, res *pb.GetContractResponse, err error) {
 				require.Error(t, err)
@@ -482,7 +482,7 @@ func TestGetDefaultContract(t *testing.T) {
 			name: "OK",
 			in:   &empty.Empty{},
 			buildStubs: func() {
-				_, _ = contractAccessor.Create("default", []string{}, &pb.ContractQuota{})
+				_, _ = contractAccessor.Create("default", []string{}, &pb.ContractQuota{}, uuid.New(), "")
 			},
 			checkResponse: func(req *empty.Empty, res *pb.GetContractResponse, err error) {
 				require.NoError(t, err)
