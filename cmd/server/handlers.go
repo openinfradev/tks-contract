@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/ptypes/empty"
-
+	"github.com/google/uuid"
 	"github.com/openinfradev/tks-common/pkg/helper"
 	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
@@ -23,7 +23,21 @@ func checkContractId(contractId string) (string, error) {
 func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractRequest) (*pb.CreateContractResponse, error) {
 	log.Info("Request 'CreateContract' for contract name", in.GetContractorName())
 
-	contractId, err := contractAccessor.Create(in.GetContractorName(), in.GetAvailableServices(), in.GetQuota())
+	var err error
+	creator := uuid.Nil
+	if in.GetCreator() != "" {
+		creator, err = uuid.Parse(in.GetCreator())
+		if err != nil {
+			return &pb.CreateContractResponse{
+				Code: pb.Code_INVALID_ARGUMENT,
+				Error: &pb.Error{
+					Msg: err.Error(),
+				},
+			}, nil
+		}
+	}
+
+	contractId, err := contractAccessor.Create(in.GetContractorName(), in.GetAvailableServices(), in.GetQuota(), creator, in.GetDescription())
 	if err != nil {
 		return &pb.CreateContractResponse{
 			Code: pb.Code_NOT_FOUND,

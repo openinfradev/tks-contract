@@ -3,6 +3,7 @@ package contract
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -90,14 +91,14 @@ func (x *Accessor) List(offset, limit int) ([]*pb.Contract, error) {
 }
 
 // Create creates a new contract in database.
-func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota) (string, error) {
+func (x *Accessor) Create(name string, availableServices []string, quota *pb.ContractQuota, creator uuid.UUID, description string) (string, error) {
 	pqStrArr := pq.StringArray{}
 
 	for _, svc := range availableServices {
 		pqStrArr = append(pqStrArr, svc)
 	}
 
-	contract := model.Contract{ContractorName: name, AvailableServices: pqStrArr}
+	contract := model.Contract{ContractorName: name, AvailableServices: pqStrArr, Creator: creator, Description: description}
 	err := x.db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Create(&contract)
 		if res.Error != nil {
