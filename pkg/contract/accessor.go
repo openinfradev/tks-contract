@@ -215,9 +215,11 @@ func reflectToPbContract(contract model.Contract, quota *pb.ContractQuota) pb.Co
 		ContractId:        contract.ID,
 		ContractorName:    contract.ContractorName,
 		AvailableServices: contract.AvailableServices,
+		Description:       contract.Description,
 		UpdatedAt:         timestamppb.New(contract.UpdatedAt),
 		CreatedAt:         timestamppb.New(contract.CreatedAt),
 		Quota:             quota,
+		Creator:           contract.Creator.String(),
 	}
 }
 
