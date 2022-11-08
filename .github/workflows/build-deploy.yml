@@ -6,7 +6,7 @@ on:
       - 'release**'
 env:
   SERVICE: tks-contract
-  TARGET: development
+  TARGET: cicd
   TAG: ${{github.sha}}
 
 jobs:
