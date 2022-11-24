@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/lib/pq v1.10.4
-	github.com/openinfradev/tks-common v0.0.0-20221122025625-be9f8957ec3c // indirect
+	github.com/openinfradev/tks-common v0.0.0-20221124045547-fbf60e9529da
 	github.com/openinfradev/tks-proto v0.0.6-0.20221018052004-85d1b297f865
 	github.com/stretchr/testify v1.7.0
 	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4 // indirect
