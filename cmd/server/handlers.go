@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
+	"github.com/openinfradev/tks-common/pkg/argowf"
 	"github.com/openinfradev/tks-common/pkg/helper"
 	"github.com/openinfradev/tks-common/pkg/log"
 	pb "github.com/openinfradev/tks-proto/tks_pb"
@@ -74,12 +75,13 @@ func (s *server) CreateContract(ctx context.Context, in *pb.CreateContractReques
 
 	workflowTemplate := "tks-create-contract-repo"
 	nameSpace := "argo"
-	parameters := []string{
+	opts := argowf.SubmitOptions{}
+	opts.Parameters = []string{
 		"contract_id=" + contractId,
 		"revision=" + revision,
 	}
 
-	workflowName, err := argowfClient.SumbitWorkflowFromWftpl(ctx, workflowTemplate, nameSpace, parameters)
+	workflowName, err := argowfClient.SumbitWorkflowFromWftpl(workflowTemplate, nameSpace, opts)
 	if err != nil {
 		log.Error("failed to submit argo workflow template. err : ", err)
 

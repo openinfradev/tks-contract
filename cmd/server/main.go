@@ -90,7 +90,7 @@ func main() {
 	contractAccessor = contract.New(db)
 
 	// initialize argo client
-	_argowfClient, err := argowf.New(argoAddress, argoPort)
+	_argowfClient, err := argowf.New(argoAddress, argoPort, false, "")
 	if err != nil {
 		log.Fatal("failed to create argowf client : ", err)
 	}
