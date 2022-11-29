@@ -104,7 +104,7 @@ func TestCreateContract(t *testing.T) {
 				}, nil)
 
 				mockArgoClient.EXPECT().
-					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(randomString("workflowName"), nil)
 			},
@@ -158,7 +158,7 @@ func TestCreateContract(t *testing.T) {
 				}, nil)
 
 				mockArgoClient.EXPECT().
-					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					SumbitWorkflowFromWftpl(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(randomString("workflowName"), errors.New("argo error"))
 			},
